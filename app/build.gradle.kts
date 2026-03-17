@@ -66,6 +66,11 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     ksp(libs.androidx.room.ksp)
 
+    //ViewModel + lifecycle for compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+    implementation(libs.androidx.activity.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
