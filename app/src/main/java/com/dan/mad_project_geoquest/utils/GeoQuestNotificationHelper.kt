@@ -40,7 +40,7 @@ object GeoQuestNotificationHelper {
     fun sendClueNotification(context: Context, cacheTitle: String, clue: String, cacheId: Int) {
         val notification = NotificationCompat.Builder(context, CLUE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("📍 Cache Nearby: $cacheTitle")
+            .setContentTitle("Cache Nearby: $cacheTitle")
             .setContentText("Clue: $clue")
             .setStyle(NotificationCompat.BigTextStyle().bigText("Clue: $clue"))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -57,7 +57,7 @@ object GeoQuestNotificationHelper {
     fun sendFoundNotification(context: Context, cacheTitle: String, points: Int, cacheId: Int) {
         val notification = NotificationCompat.Builder(context, FOUND_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("🎉 Cache Found: $cacheTitle")
+            .setContentTitle("Cache Found: $cacheTitle")
             .setContentText("You discovered this cache and earned $points points!")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)

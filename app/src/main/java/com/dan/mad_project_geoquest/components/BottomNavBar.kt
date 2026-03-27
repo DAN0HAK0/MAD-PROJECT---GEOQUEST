@@ -58,7 +58,7 @@ fun BottomNavBar(
                 )
                 NavBarItem(
                     icon = Icons.Filled.Star,
-                    label = "Blank",
+                    label = "Leaderboard",
                     selected = currentDestination is NavObjects.Blank,
                     onClick = { onNavigate(NavObjects.Blank) }
                 )

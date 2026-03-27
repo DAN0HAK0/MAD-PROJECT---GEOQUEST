@@ -15,6 +15,6 @@ fun BlankScreen() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = "Blank Screen", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Leaderboard", fontSize = 24.sp, fontWeight = FontWeight.Bold)
     }
 }

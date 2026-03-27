@@ -41,10 +41,6 @@ fun HomeScreen(cacheViewModel: CacheViewModel) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "🗺️",
-                        fontSize = 48.sp
-                    )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "No caches found yet",
