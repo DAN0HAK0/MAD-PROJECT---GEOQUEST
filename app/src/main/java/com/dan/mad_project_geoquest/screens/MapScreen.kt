@@ -20,11 +20,20 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
     val foundCaches by cacheViewModel.foundCaches.collectAsState()
     val userLocation by cacheViewModel.userLocation.collectAsState()
     val mapView = rememberMapViewWithLifecycle()
+    var hasMovedCamera by remember { mutableStateOf(false) }
 
     AndroidView(
         factory = { context ->
             mapView.apply {
                 getMapAsync { googleMap ->
+                    // Enable the native blue dot — permission must already be granted
+                    try {
+                        googleMap.isMyLocationEnabled = true
+                        googleMap.uiSettings.isMyLocationButtonEnabled = true
+                    } catch (e: SecurityException) {
+                        e.printStackTrace()
+                    }
+
                     val kingston = LatLng(51.4123, -0.3007)
                     googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(kingston, 15f))
                 }
@@ -37,13 +46,12 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
 
                 userLocation?.let { loc ->
                     val userLatLng = LatLng(loc.latitude, loc.longitude)
-                    googleMap.addMarker(
-                        MarkerOptions()
-                            .position(userLatLng)
-                            .title("You are here")
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-                    )
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 15f))
+
+                    // Only animate to the user's location once, not on every recomposition
+                    if (!hasMovedCamera) {
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 15f))
+                        hasMovedCamera = true
+                    }
                 }
 
                 foundCaches.forEach { cache ->
@@ -52,7 +60,7 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
                         MarkerOptions()
                             .position(position)
                             .title(cache.title)
-                            .snippet("⭐ ${cache.points} pts")
+                            .snippet("${cache.points} pts")
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
                     )
                 }
