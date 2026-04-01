@@ -36,13 +36,12 @@ class MainActivity : ComponentActivity() {
 
     private val notificationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { }
+    ) { /* handled silently */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Request permissions on launch
         locationPermissionRequest.launch(
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -50,31 +49,35 @@ class MainActivity : ComponentActivity() {
             )
         )
 
-// Request notification permission separately after a short delay
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 notificationPermissionRequest.launch(Manifest.permission.POST_NOTIFICATIONS)
             }, 1000L)
         }
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            notificationPermissionRequest.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-
         setContent {
             MadProjectGEOQUESTTheme {
-                val backStack = remember { mutableStateListOf<Any>(NavObjects.Home) }
+                // Start at Login, not Home
+                val backStack = remember { mutableStateListOf<Any>(NavObjects.Login) }
                 val currentDestination = backStack.lastOrNull()
+
+                // Only show the bottom bar when NOT on the Login screen
+                val showBottomBar = currentDestination !is NavObjects.Login
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        BottomNavBar(
-                            currentDestination = currentDestination,
-                            onNavigate = { destination ->
-                                backStack.add(destination)
-                            }
-                        )
+                        if (showBottomBar) {
+                            BottomNavBar(
+                                currentDestination = currentDestination,
+                                onNavigate = { destination ->
+                                    // Avoid stacking duplicates
+                                    if (backStack.lastOrNull()?.javaClass != destination.javaClass) {
+                                        backStack.add(destination)
+                                    }
+                                }
+                            )
+                        }
                     }
                 ) { paddingValues ->
                     NavDisplay(
@@ -83,16 +86,35 @@ class MainActivity : ComponentActivity() {
                         onBack = { backStack.removeLastOrNull() },
                         entryProvider = { route ->
                             when (route) {
+                                is NavObjects.Login ->
+                                    NavEntry(route) {
+                                        LoginScreen(
+                                            cacheViewModel = cacheViewModel,
+                                            onLoginSuccess = {
+                                                // Replace the Login entry with Home
+                                                backStack.clear()
+                                                backStack.add(NavObjects.Home)
+                                            }
+                                        )
+                                    }
                                 is NavObjects.Home ->
                                     NavEntry(route) { HomeScreen(cacheViewModel) }
                                 is NavObjects.Blank ->
-                                    NavEntry(route) { BlankScreen() }
+                                    NavEntry(route) { LeaderboardScreen(cacheViewModel) }
                                 is NavObjects.Map ->
                                     NavEntry(route) { MapScreen(cacheViewModel) }
                                 is NavObjects.Stats ->
-                                    NavEntry(route) { StatsScreen() }
+                                    NavEntry(route) { StatsScreen(cacheViewModel) }
                                 is NavObjects.Settings ->
-                                    NavEntry(route) { SettingsScreen() }
+                                    NavEntry(route) {
+                                        SettingsScreen(
+                                            cacheViewModel = cacheViewModel,
+                                            onLogout = {
+                                                backStack.clear()
+                                                backStack.add(NavObjects.Login)
+                                            }
+                                        )
+                                    }
                                 else -> error("Unknown route: $route")
                             }
                         }

@@ -1,6 +1,5 @@
 package com.dan.mad_project_geoquest.components
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -78,7 +77,7 @@ fun BottomNavBar(
             }
         }
 
-        // Map button floating above
+        // Map button floating above centre
         Box(
             modifier = Modifier
                 .size(70.dp)

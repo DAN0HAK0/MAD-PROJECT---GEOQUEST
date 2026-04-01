@@ -7,10 +7,13 @@ import kotlinx.serialization.Serializable
 sealed interface NavObjects : NavKey {
 
     @Serializable
+    data object Login : NavObjects
+
+    @Serializable
     data object Home : NavObjects
 
     @Serializable
-    data object Blank : NavObjects
+    data object Blank : NavObjects  // Leaderboard
 
     @Serializable
     data object Map : NavObjects
