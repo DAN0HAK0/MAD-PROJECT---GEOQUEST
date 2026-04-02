@@ -21,8 +21,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-// ─── UI State ────────────────────────────────────────────────────
+// ─── UI State data classes ────────────────────────────────────────
 
 data class LoginUiState(
     val username: String = "",
@@ -62,14 +65,14 @@ data class StatsUiState(
     val errorMessage: String? = null
 )
 
-// ─── ViewModel ───────────────────────────────────────────────────
+// ─── ViewModel ────────────────────────────────────────────────────
 
 class CacheViewModel(application: Application) : AndroidViewModel(application) {
 
     private val fusedLocationClient =
         LocationServices.getFusedLocationProviderClient(application)
 
-    // ── Location ─────────────────────────────────────────────────
+    // ── Location ──────────────────────────────────────────────────
     private val _userLocation = MutableStateFlow<Location?>(null)
     val userLocation: StateFlow<Location?> = _userLocation.asStateFlow()
 
@@ -89,15 +92,16 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
     private val _statsUiState = MutableStateFlow(StatsUiState())
     val statsUiState: StateFlow<StatsUiState> = _statsUiState.asStateFlow()
 
-    // Keep a raw found caches list for the map markers (caches the player has found)
-    private val _foundCaches = MutableStateFlow<List<Cache>>(emptyList())
-    val foundCaches: StateFlow<List<Cache>> = _foundCaches.asStateFlow()
-
-    // All caches from API (for map)
+    // All caches from API (used by map and home)
     private val _allCaches = MutableStateFlow<List<Cache>>(emptyList())
     val allCaches: StateFlow<List<Cache>> = _allCaches.asStateFlow()
 
-    // ── Location updates ─────────────────────────────────────────
+    // Caches the current player has already found (for HomeScreen list)
+    private val _foundCaches = MutableStateFlow<List<Cache>>(emptyList())
+    val foundCaches: StateFlow<List<Cache>> = _foundCaches.asStateFlow()
+
+    // ── Location updates ──────────────────────────────────────────
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             _userLocation.value = result.lastLocation
@@ -133,6 +137,7 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
             _loginUiState.value = state.copy(errorMessage = "Username and password are required")
             return
         }
+
         _loginUiState.value = state.copy(isLoading = true, errorMessage = null)
 
         viewModelScope.launch {
@@ -142,12 +147,13 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                     u.UserUsername.equals(state.username.trim(), ignoreCase = true) &&
                             u.UserPassword == state.password
                 }
+
                 if (match != null) {
                     SessionManager.currentUser = match
 
-                    // Try to find/create a Player record for this user
+                    // Resolve player record for this user
                     try {
-                        val players = RetrofitClient.instance.getPlayers()
+                        val players: List<Player> = RetrofitClient.instance.getPlayers()
                         SessionManager.currentPlayer = players.find { it.PlayerUserID == match.UserID }
                     } catch (_: Exception) {}
 
@@ -155,9 +161,11 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                         isLoading = false,
                         isLoginSuccess = true
                     )
-                    // Pre-load data after login
+
+                    // Pre-load data immediately after login
                     loadAllCaches()
                     loadHomeData()
+
                 } else {
                     _loginUiState.value = _loginUiState.value.copy(
                         isLoading = false,
@@ -181,11 +189,13 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
         SessionManager.clear()
         _loginUiState.value = LoginUiState()
         _homeUiState.value = HomeUiState()
+        _leaderboardUiState.value = LeaderboardUiState()
+        _statsUiState.value = StatsUiState()
         _foundCaches.value = emptyList()
         _allCaches.value = emptyList()
     }
 
-    // ── Home / Caches ─────────────────────────────────────────────
+    // ── Caches ────────────────────────────────────────────────────
 
     fun loadAllCaches() {
         viewModelScope.launch {
@@ -204,15 +214,13 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                 val events = RetrofitClient.instance.getEvents()
                 _allCaches.value = caches
 
-                // Get my finds if player exists
                 val player = SessionManager.currentPlayer
-                val myFinds = if (player != null) {
+                val myFinds: List<Find> = if (player != null) {
                     try {
                         RetrofitClient.instance.getFindsByPlayer(player.PlayerID)
                     } catch (_: Exception) { emptyList() }
                 } else emptyList()
 
-                // Found caches = caches the player has a Find record for
                 val foundCacheIds = myFinds.map { it.FindCacheID }.toSet()
                 _foundCaches.value = caches.filter { it.CacheID in foundCacheIds }
 
@@ -225,24 +233,29 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 _homeUiState.value = _homeUiState.value.copy(
                     isLoading = false,
-                    errorMessage = "Failed to load: ${e.localizedMessage}"
+                    errorMessage = "Failed to load data: ${e.localizedMessage}"
                 )
             }
         }
     }
 
-    // Called from MapScreen when player taps "Log Find"
+    // Called when player taps "Log This Find" on a cache in MapScreen
     fun logFind(cache: Cache, onResult: (Boolean) -> Unit) {
         val player = SessionManager.currentPlayer ?: run { onResult(false); return }
+
         viewModelScope.launch {
             try {
+                // ISO 8601 datetime without requiring java.time (API 26+ safe)
+                val isoDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK)
+                    .format(Date())
+
                 val find = Find(
                     FindPlayerID = player.PlayerID,
                     FindCacheID = cache.CacheID,
-                    FindDatetime = java.time.Instant.now().toString()
+                    FindDatetime = isoDate
                 )
                 RetrofitClient.instance.createFind(find)
-                loadHomeData() // refresh
+                loadHomeData() // refresh found caches
                 onResult(true)
             } catch (e: Exception) {
                 onResult(false)
@@ -256,21 +269,20 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
         _leaderboardUiState.value = _leaderboardUiState.value.copy(isLoading = true)
         viewModelScope.launch {
             try {
-                val users = RetrofitClient.instance.getUsers()
-                val finds = RetrofitClient.instance.getFinds()
-                val players = RetrofitClient.instance.getPlayers()
-
+                val users: List<User> = RetrofitClient.instance.getUsers()
+                val finds: List<Find> = RetrofitClient.instance.getFinds()
+                val players: List<Player> = RetrofitClient.instance.getPlayers()
                 val currentUserId = SessionManager.currentUser?.UserID
 
-                // Count finds per PlayerID, then map to user
                 val findCountByPlayer = finds.groupBy { it.FindPlayerID }
                     .mapValues { it.value.size }
 
-                val entries = users.map { user ->
-                    val player = players.find { it.PlayerUserID == user.UserID }
-                    val count = if (player != null) findCountByPlayer[player.PlayerID] ?: 0 else 0
-                    Triple(user, player, count)
-                }
+                val entries = users
+                    .map { user ->
+                        val player = players.find { it.PlayerUserID == user.UserID }
+                        val count = if (player != null) findCountByPlayer[player.PlayerID] ?: 0 else 0
+                        Triple(user, player, count)
+                    }
                     .sortedByDescending { it.third }
                     .mapIndexed { index, (user, _, count) ->
                         LeaderboardEntry(
@@ -309,12 +321,8 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                     } catch (_: Exception) { emptyList() }
                 } else emptyList()
 
-                // Total points = sum of CachePoints for each found cache
-                val allCaches = RetrofitClient.instance.getCaches()
-                val foundCacheIds = myFinds.map { it.FindCacheID }.toSet()
-                val totalPoints = allCaches
-                    .filter { it.CacheID in foundCacheIds }
-                    .sumOf { it.CachePoints }
+                // Sum points from the Cache objects embedded in each Find
+                val totalPoints = myFinds.sumOf { it.FindCache?.CachePoints ?: 0.0 }
 
                 _statsUiState.value = _statsUiState.value.copy(
                     isLoading = false,
@@ -331,4 +339,5 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
 }

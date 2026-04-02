@@ -77,23 +77,6 @@ fun SettingsScreen(
             }
         }
 
-        Spacer(Modifier.height(20.dp))
-
-        // ── About Card ────────────────────────────────────────────
-        SectionTitle("About")
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                SettingsInfoRow("Version", "1.0.0")
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                SettingsInfoRow("API", "mark0s.com/geoquest/v1")
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                SettingsInfoRow("Platform", "Android · Jetpack Compose")
-            }
-        }
-
         Spacer(Modifier.height(28.dp))
 
         // ── Logout Button ─────────────────────────────────────────

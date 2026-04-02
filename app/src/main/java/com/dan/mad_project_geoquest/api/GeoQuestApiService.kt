@@ -1,11 +1,6 @@
 package com.dan.mad_project_geoquest.api
 
 import retrofit2.http.*
-
-// Replace with your team's key from Graeme — keeping public key for now
-const val API_KEY = "577p2m"
-const val BASE_URL = "https://mark0s.com/geoquest/v1/"
-
 interface GeoQuestApiService {
 
     // ── Users ────────────────────────────────────────────────────

@@ -9,7 +9,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -60,6 +60,11 @@ fun LoginScreen(
             Spacer(Modifier.height(48.dp))
 
             // ── Logo ──────────────────────────────────────────────
+            Text(
+                text = "📍",
+                fontSize = 64.sp
+            )
+            Spacer(Modifier.height(12.dp))
             Text(
                 text = "GeoQuest",
                 fontSize = 36.sp,
@@ -123,7 +128,7 @@ fun LoginScreen(
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Filled.Close else Icons.Filled.Lock,
+                                    imageVector = if (passwordVisible) Icons.Filled.Lock else Icons.Filled.KeyboardArrowUp,
                                     contentDescription = if (passwordVisible) "Hide password" else "Show password"
                                 )
                             }
@@ -190,16 +195,6 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
-
-            Text(
-                text = "Use your GeoQuest username & password\nAPI: mark0s.com/geoquest/v1",
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(32.dp))
         }
     }
 }

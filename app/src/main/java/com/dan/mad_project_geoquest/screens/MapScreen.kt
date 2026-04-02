@@ -160,13 +160,13 @@ fun CacheBottomSheet(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "${cache.CacheLatitude}, ${cache.CacheLongitude}",
+                text = "📍 ${cache.CacheLatitude}, ${cache.CacheLongitude}",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.primary
             )
             cache.CacheEvent?.let {
                 Text(
-                    text = "${it.EventName}",
+                    text = "🗓 ${it.EventName}",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -182,7 +182,7 @@ fun CacheBottomSheet(
                 Spacer(Modifier.height(8.dp))
             }
             Text(
-                text = "Points: ${cache.CachePoints.toInt()}",
+                text = "⭐ Points: ${cache.CachePoints.toInt()}",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.secondary

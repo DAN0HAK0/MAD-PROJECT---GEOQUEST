@@ -54,10 +54,15 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
 
-    // Retrofit + Gson
+    // Retrofit + OkHttp (exactly as shown in course Gradle file)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
-    implementation(libs.gson)
+    implementation(libs.okhttp.logging)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+
+
     //navigation
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
@@ -76,7 +81,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation(libs.androidx.activity.ktx)
 
-    // Retrofit + Gson
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
