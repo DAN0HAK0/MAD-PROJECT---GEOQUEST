@@ -57,12 +57,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MadProjectGEOQUESTTheme {
-                // Start at Login, not Home
                 val backStack = remember { mutableStateListOf<Any>(NavObjects.Login) }
                 val currentDestination = backStack.lastOrNull()
 
-                // Only show the bottom bar when NOT on the Login screen
-                val showBottomBar = currentDestination !is NavObjects.Login
+                // Hide bottom bar on Login and Register screens
+                val showBottomBar = currentDestination !is NavObjects.Login &&
+                        currentDestination !is NavObjects.Register
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -71,7 +71,6 @@ class MainActivity : ComponentActivity() {
                             BottomNavBar(
                                 currentDestination = currentDestination,
                                 onNavigate = { destination ->
-                                    // Avoid stacking duplicates
                                     if (backStack.lastOrNull()?.javaClass != destination.javaClass) {
                                         backStack.add(destination)
                                     }
@@ -91,9 +90,23 @@ class MainActivity : ComponentActivity() {
                                         LoginScreen(
                                             cacheViewModel = cacheViewModel,
                                             onLoginSuccess = {
-                                                // Replace the Login entry with Home
                                                 backStack.clear()
                                                 backStack.add(NavObjects.Home)
+                                            },
+                                            onNavigateToRegister = {
+                                                backStack.add(NavObjects.Register)
+                                            }
+                                        )
+                                    }
+                                is NavObjects.Register ->
+                                    NavEntry(route) {
+                                        RegisterScreen(
+                                            cacheViewModel = cacheViewModel,
+                                            onRegisterSuccess = {
+                                                backStack.removeLastOrNull()
+                                            },
+                                            onBackToLogin = {
+                                                backStack.removeLastOrNull()
                                             }
                                         )
                                     }

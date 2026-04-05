@@ -35,6 +35,18 @@ data class LoginUiState(
     val isLoginSuccess: Boolean = false
 )
 
+data class RegisterUiState(
+    val firstname: String = "",
+    val lastname: String = "",
+    val phone: String = "",
+    val username: String = "",
+    val password: String = "",
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val successMessage: String? = null,
+    val isSuccess: Boolean = false
+)
+
 data class HomeUiState(
     val isLoading: Boolean = false,
     val allCaches: List<Cache> = emptyList(),
@@ -79,6 +91,10 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
     // ── Login ─────────────────────────────────────────────────────
     private val _loginUiState = MutableStateFlow(LoginUiState())
     val loginUiState: StateFlow<LoginUiState> = _loginUiState.asStateFlow()
+
+    // ── Register ──────────────────────────────────────────────────
+    private val _registerUiState = MutableStateFlow(RegisterUiState())
+    val registerUiState: StateFlow<RegisterUiState> = _registerUiState.asStateFlow()
 
     // ── Home ──────────────────────────────────────────────────────
     private val _homeUiState = MutableStateFlow(HomeUiState())
@@ -151,10 +167,11 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                 if (match != null) {
                     SessionManager.currentUser = match
 
-                    // Resolve player record for this user
                     try {
                         val players: List<Player> = RetrofitClient.instance.getPlayers()
-                        SessionManager.currentPlayer = players.find { it.PlayerUserID == match.UserID }
+                        SessionManager.currentPlayer = players.find {
+                            it.PlayerUserID == (match.UserID ?: 0)
+                        }
                     } catch (_: Exception) {}
 
                     _loginUiState.value = _loginUiState.value.copy(
@@ -162,7 +179,6 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                         isLoginSuccess = true
                     )
 
-                    // Pre-load data immediately after login
                     loadAllCaches()
                     loadHomeData()
 
@@ -188,11 +204,99 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
     fun logout() {
         SessionManager.clear()
         _loginUiState.value = LoginUiState()
+        _registerUiState.value = RegisterUiState()
         _homeUiState.value = HomeUiState()
         _leaderboardUiState.value = LeaderboardUiState()
         _statsUiState.value = StatsUiState()
         _foundCaches.value = emptyList()
         _allCaches.value = emptyList()
+    }
+
+    // ── Register ──────────────────────────────────────────────────
+
+    fun onRegisterFirstnameChange(v: String) {
+        _registerUiState.value = _registerUiState.value.copy(firstname = v, errorMessage = null)
+    }
+
+    fun onRegisterLastnameChange(v: String) {
+        _registerUiState.value = _registerUiState.value.copy(lastname = v, errorMessage = null)
+    }
+
+    fun onRegisterPhoneChange(v: String) {
+        _registerUiState.value = _registerUiState.value.copy(phone = v, errorMessage = null)
+    }
+
+    fun onRegisterUsernameChange(v: String) {
+        _registerUiState.value = _registerUiState.value.copy(username = v, errorMessage = null)
+    }
+
+    fun onRegisterPasswordChange(v: String) {
+        _registerUiState.value = _registerUiState.value.copy(password = v, errorMessage = null)
+    }
+
+    fun register() {
+        val state = _registerUiState.value
+
+        if (state.firstname.isBlank() || state.username.isBlank() || state.password.isBlank()) {
+            _registerUiState.value = state.copy(errorMessage = "First name, username and password are required")
+            return
+        }
+        if (state.username.length < 8) {
+            _registerUiState.value = state.copy(errorMessage = "Username must be at least 8 characters")
+            return
+        }
+        if (state.phone.length < 12) {
+            _registerUiState.value = state.copy(errorMessage = "Phone must be at least 12 characters e.g. 07700000000")
+            return
+        }
+
+        _registerUiState.value = state.copy(isLoading = true, errorMessage = null)
+
+        viewModelScope.launch {
+            try {
+                val users = RetrofitClient.instance.createUser(
+                    User(
+                        UserFirstname = state.firstname,
+                        UserLastname = state.lastname,
+                        UserPhone = state.phone,
+                        UserUsername = state.username,
+                        UserPassword = state.password,
+                        UserLatitude = 0.0,
+                        UserLongitude = 0.0,
+                        UserTimestamp = 0L,
+                        UserImageURL = "https://static.generated.photos/vue-static/face-generator/landing/wall/1.jpg"
+                    )
+                )
+                val user = users.firstOrNull()
+                _registerUiState.value = _registerUiState.value.copy(
+                    isLoading = false,
+                    successMessage = "Account created! ID: ${user?.UserID}. You can now sign in.",
+                    isSuccess = true
+                )
+                _registerUiState.value = _registerUiState.value.copy(
+                    isLoading = false,
+                    successMessage = "Account created! You can now sign in.",
+                    isSuccess = true
+                )
+            } catch (e: retrofit2.HttpException) {
+                val errorBody = e.response()?.errorBody()?.string()
+                android.util.Log.e("REGISTER", "HTTP ${e.code()} - $errorBody")
+                _registerUiState.value = _registerUiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "HTTP ${e.code()}: $errorBody"
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("REGISTER", "Error: ${e.localizedMessage}")
+                _registerUiState.value = _registerUiState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Failed: ${e.localizedMessage}"
+                )
+            }
+        }
+    }
+
+    fun resetRegisterState() {
+        _registerUiState.value = RegisterUiState()
     }
 
     // ── Caches ────────────────────────────────────────────────────
@@ -217,7 +321,7 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                 val player = SessionManager.currentPlayer
                 val myFinds: List<Find> = if (player != null) {
                     try {
-                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID)
+                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID ?: 0)
                     } catch (_: Exception) { emptyList() }
                 } else emptyList()
 
@@ -239,23 +343,21 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Called when player taps "Log This Find" on a cache in MapScreen
     fun logFind(cache: Cache, onResult: (Boolean) -> Unit) {
         val player = SessionManager.currentPlayer ?: run { onResult(false); return }
 
         viewModelScope.launch {
             try {
-                // ISO 8601 datetime without requiring java.time (API 26+ safe)
                 val isoDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK)
                     .format(Date())
 
                 val find = Find(
-                    FindPlayerID = player.PlayerID,
-                    FindCacheID = cache.CacheID,
+                    FindPlayerID = player.PlayerID ?: 0,
+                    FindCacheID = cache.CacheID ?: 0,
                     FindDatetime = isoDate
                 )
-                RetrofitClient.instance.createFind(find)
-                loadHomeData() // refresh found caches
+                val finds = RetrofitClient.instance.createFind(find)
+                loadHomeData()
                 onResult(true)
             } catch (e: Exception) {
                 onResult(false)
@@ -279,8 +381,8 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
 
                 val entries = users
                     .map { user ->
-                        val player = players.find { it.PlayerUserID == user.UserID }
-                        val count = if (player != null) findCountByPlayer[player.PlayerID] ?: 0 else 0
+                        val player = players.find { it.PlayerUserID == (user.UserID ?: 0) }
+                        val count = if (player != null) findCountByPlayer[player.PlayerID ?: 0] ?: 0 else 0
                         Triple(user, player, count)
                     }
                     .sortedByDescending { it.third }
@@ -317,11 +419,10 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
 
                 val myFinds: List<Find> = if (player != null) {
                     try {
-                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID)
+                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID ?: 0)
                     } catch (_: Exception) { emptyList() }
                 } else emptyList()
 
-                // Sum points from the Cache objects embedded in each Find
                 val totalPoints = myFinds.sumOf { it.FindCache?.CachePoints ?: 0.0 }
 
                 _statsUiState.value = _statsUiState.value.copy(
@@ -339,5 +440,4 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
 }

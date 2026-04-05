@@ -1,6 +1,7 @@
 package com.dan.mad_project_geoquest.api
 
 import retrofit2.http.*
+
 interface GeoQuestApiService {
 
     // ── Users ────────────────────────────────────────────────────
@@ -14,12 +15,14 @@ interface GeoQuestApiService {
     ): User
 
     @POST("api/users")
+    @Headers("Content-Type: application/json")
     suspend fun createUser(
         @Body user: User,
         @Query("key") key: String = API_KEY
-    ): User
+    ): List<User>
 
     @PUT("api/users/{id}")
+    @Headers("Content-Type: application/json")
     suspend fun updateUser(
         @Path("id") id: Int,
         @Body user: User,
@@ -49,12 +52,14 @@ interface GeoQuestApiService {
     ): List<Event>
 
     @POST("api/events")
+    @Headers("Content-Type: application/json")
     suspend fun createEvent(
         @Body event: Event,
         @Query("key") key: String = API_KEY
-    ): Event
+    ): List<Event>
 
     @PUT("api/events/{id}")
+    @Headers("Content-Type: application/json")
     suspend fun updateEvent(
         @Path("id") id: Int,
         @Body event: Event,
@@ -88,12 +93,13 @@ interface GeoQuestApiService {
     ): List<Player>
 
     @POST("api/players")
+    @Headers("Content-Type: application/json")
     suspend fun createPlayer(
         @Body player: Player,
         @Query("key") key: String = API_KEY
-    ): Player
-
+    ): List<Player>
     @PUT("api/players/{id}")
+    @Headers("Content-Type: application/json")
     suspend fun updatePlayer(
         @Path("id") id: Int,
         @Body player: Player,
@@ -123,12 +129,14 @@ interface GeoQuestApiService {
     ): List<Cache>
 
     @POST("api/caches")
+    @Headers("Content-Type: application/json")
     suspend fun createCache(
         @Body cache: Cache,
         @Query("key") key: String = API_KEY
-    ): Cache
+    ): List<Cache>
 
     @PUT("api/caches/{id}")
+    @Headers("Content-Type: application/json")
     suspend fun updateCache(
         @Path("id") id: Int,
         @Body cache: Cache,
@@ -164,12 +172,14 @@ interface GeoQuestApiService {
     ): List<Find>
 
     @POST("api/finds")
+    @Headers("Content-Type: application/json")
     suspend fun createFind(
         @Body find: Find,
         @Query("key") key: String = API_KEY
-    ): Find
+    ): List<Find>
 
     @PUT("api/finds/{id}")
+    @Headers("Content-Type: application/json")
     suspend fun updateFind(
         @Path("id") id: Int,
         @Body find: Find,

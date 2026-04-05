@@ -10,6 +10,9 @@ sealed interface NavObjects : NavKey {
     data object Login : NavObjects
 
     @Serializable
+    data object Register : NavObjects
+
+    @Serializable
     data object Home : NavObjects
 
     @Serializable

@@ -9,10 +9,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,29 +19,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dan.mad_project_geoquest.viewmodel.CacheViewModel
 
 @Composable
-fun LoginScreen(
+fun RegisterScreen(
     cacheViewModel: CacheViewModel,
-    onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onRegisterSuccess: () -> Unit,
+    onBackToLogin: () -> Unit
 ) {
-    val uiState by cacheViewModel.loginUiState.collectAsState()
+    val uiState by cacheViewModel.registerUiState.collectAsState()
     val focusManager = LocalFocusManager.current
     var passwordVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState.isLoginSuccess) {
-        if (uiState.isLoginSuccess) {
-            cacheViewModel.resetLoginSuccess()
-            onLoginSuccess()
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            cacheViewModel.resetRegisterState()
+            onRegisterSuccess()
         }
     }
 
@@ -61,7 +57,7 @@ fun LoginScreen(
         ) {
             Spacer(Modifier.height(48.dp))
 
-            Text(text = "📍", fontSize = 64.sp)
+            Text("📍", fontSize = 64.sp)
             Spacer(Modifier.height(12.dp))
             Text(
                 text = "GeoQuest",
@@ -70,13 +66,13 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Location-Based Treasure Hunt",
+                text = "Create your account",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(32.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -86,57 +82,102 @@ fun LoginScreen(
                 Column(modifier = Modifier.padding(24.dp)) {
 
                     Text(
-                        text = "Sign In",
+                        text = "Register",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 20.dp)
                     )
 
+                    // First Name
                     OutlinedTextField(
-                        value = uiState.username,
-                        onValueChange = cacheViewModel::onLoginUsernameChange,
-                        label = { Text("Username") },
-                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
+                        value = uiState.firstname,
+                        onValueChange = { cacheViewModel.onRegisterFirstnameChange(it) },
+                        label = { Text("First Name") },
+                        leadingIcon = { Icon(Icons.Filled.Person, null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
 
+                    // Last Name
+                    OutlinedTextField(
+                        value = uiState.lastname,
+                        onValueChange = { cacheViewModel.onRegisterLastnameChange(it) },
+                        label = { Text("Last Name") },
+                        leadingIcon = { Icon(Icons.Filled.Person, null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // Phone
+                    OutlinedTextField(
+                        value = uiState.phone,
+                        onValueChange = { cacheViewModel.onRegisterPhoneChange(it) },
+                        label = { Text("Phone (min 12 chars e.g. 07700000000)") },
+                        leadingIcon = { Icon(Icons.Filled.Phone, null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Phone,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // Username
+                    OutlinedTextField(
+                        value = uiState.username,
+                        onValueChange = { cacheViewModel.onRegisterUsernameChange(it) },
+                        label = { Text("Username (min 8 characters)") },
+                        leadingIcon = { Icon(Icons.Filled.Person, null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // Password
                     OutlinedTextField(
                         value = uiState.password,
-                        onValueChange = cacheViewModel::onLoginPasswordChange,
+                        onValueChange = { cacheViewModel.onRegisterPasswordChange(it) },
                         label = { Text("Password") },
-                        leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Filled.Lock, null) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Filled.Search else Icons.Filled.FavoriteBorder,
-                                    contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                                    imageVector = if (passwordVisible)
+                                        Icons.Filled.Person else Icons.Filled.Lock,
+                                    contentDescription = null
                                 )
                             }
                         },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                focusManager.clearFocus()
-                                cacheViewModel.login()
-                            }
-                        ),
+                        keyboardActions = KeyboardActions(onDone = {
+                            focusManager.clearFocus()
+                            cacheViewModel.register()
+                        }),
                         shape = RoundedCornerShape(12.dp)
                     )
 
@@ -152,12 +193,24 @@ fun LoginScreen(
                         )
                     }
 
+                    AnimatedVisibility(visible = uiState.successMessage != null) {
+                        Text(
+                            text = uiState.successMessage ?: "",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
                     Spacer(Modifier.height(24.dp))
 
                     Button(
                         onClick = {
                             focusManager.clearFocus()
-                            cacheViewModel.login()
+                            cacheViewModel.register()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -172,26 +225,27 @@ fun LoginScreen(
                                 strokeWidth = 2.dp
                             )
                             Spacer(Modifier.width(10.dp))
-                            Text("Signing in...")
+                            Text("Creating account...")
                         } else {
                             Text(
-                                text = "Sign In",
+                                "Create Account",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
 
                     TextButton(
-                        onClick = onNavigateToRegister,
+                        onClick = onBackToLogin,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Don't have an account? Register")
+                        Text("Already have an account? Sign In")
                     }
                 }
             }
+            Spacer(Modifier.height(32.dp))
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.dan.mad_project_geoquest.api
 
+import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -10,7 +11,6 @@ const val BASE_URL = "https://mark0s.com/geoquest/v1/"
 
 object RetrofitClient {
 
-    // OkHttp logging interceptor — exactly as shown in course API.pdf
     private val logger = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BASIC
     }
@@ -25,7 +25,11 @@ object RetrofitClient {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(
+                GsonConverterFactory.create(
+                    GsonBuilder().create()
+                )
+            )
             .build()
             .create(GeoQuestApiService::class.java)
     }
