@@ -8,10 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.dan.mad_project_geoquest.api.Cache
 import com.dan.mad_project_geoquest.api.Event
 import com.dan.mad_project_geoquest.api.Find
+import com.dan.mad_project_geoquest.api.FindPayload
 import com.dan.mad_project_geoquest.api.Player
 import com.dan.mad_project_geoquest.api.RetrofitClient
 import com.dan.mad_project_geoquest.api.SessionManager
 import com.dan.mad_project_geoquest.api.User
+import com.dan.mad_project_geoquest.api.UserPayload
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -112,7 +114,7 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
     private val _allCaches = MutableStateFlow<List<Cache>>(emptyList())
     val allCaches: StateFlow<List<Cache>> = _allCaches.asStateFlow()
 
-    // Caches the current player has already found (for HomeScreen list)
+    // Caches the current player has already found
     private val _foundCaches = MutableStateFlow<List<Cache>>(emptyList())
     val foundCaches: StateFlow<List<Cache>> = _foundCaches.asStateFlow()
 
@@ -169,9 +171,8 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
 
                     try {
                         val players: List<Player> = RetrofitClient.instance.getPlayers()
-                        SessionManager.currentPlayer = players.find {
-                            it.PlayerUserID == (match.UserID ?: 0)
-                        }
+                        SessionManager.currentPlayer =
+                            players.find { it.PlayerUserID == match.UserID }
                     } catch (_: Exception) {}
 
                     _loginUiState.value = _loginUiState.value.copy(
@@ -254,8 +255,8 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
-                val users = RetrofitClient.instance.createUser(
-                    User(
+                val response = RetrofitClient.instance.createUser(
+                    UserPayload(
                         UserFirstname = state.firstname,
                         UserLastname = state.lastname,
                         UserPhone = state.phone,
@@ -263,28 +264,22 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                         UserPassword = state.password,
                         UserLatitude = 0.0,
                         UserLongitude = 0.0,
-                        UserTimestamp = 0L,
+                        UserTimestamp = 0.0,
                         UserImageURL = "https://static.generated.photos/vue-static/face-generator/landing/wall/1.jpg"
                     )
                 )
-                val user = users.firstOrNull()
-                _registerUiState.value = _registerUiState.value.copy(
-                    isLoading = false,
-                    successMessage = "Account created! ID: ${user?.UserID}. You can now sign in.",
-                    isSuccess = true
-                )
-                _registerUiState.value = _registerUiState.value.copy(
-                    isLoading = false,
-                    successMessage = "Account created! You can now sign in.",
-                    isSuccess = true
-                )
-            } catch (e: retrofit2.HttpException) {
-                val errorBody = e.response()?.errorBody()?.string()
-                android.util.Log.e("REGISTER", "HTTP ${e.code()} - $errorBody")
-                _registerUiState.value = _registerUiState.value.copy(
-                    isLoading = false,
-                    errorMessage = "HTTP ${e.code()}: $errorBody"
-                )
+                if (response.isSuccessful) {
+                    _registerUiState.value = _registerUiState.value.copy(
+                        isLoading = false,
+                        successMessage = "Account created! You can now sign in.",
+                        isSuccess = true
+                    )
+                } else {
+                    _registerUiState.value = _registerUiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "Failed: HTTP ${response.code()}"
+                    )
+                }
             } catch (e: Exception) {
                 android.util.Log.e("REGISTER", "Error: ${e.localizedMessage}")
                 _registerUiState.value = _registerUiState.value.copy(
@@ -321,7 +316,7 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                 val player = SessionManager.currentPlayer
                 val myFinds: List<Find> = if (player != null) {
                     try {
-                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID ?: 0)
+                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID)
                     } catch (_: Exception) { emptyList() }
                 } else emptyList()
 
@@ -351,14 +346,19 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                 val isoDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK)
                     .format(Date())
 
-                val find = Find(
-                    FindPlayerID = player.PlayerID ?: 0,
-                    FindCacheID = cache.CacheID ?: 0,
-                    FindDatetime = isoDate
+                val response = RetrofitClient.instance.createFind(
+                    FindPayload(
+                        FindPlayerID = player.PlayerID,
+                        FindCacheID = cache.CacheID,
+                        FindDatetime = isoDate
+                    )
                 )
-                val finds = RetrofitClient.instance.createFind(find)
-                loadHomeData()
-                onResult(true)
+                if (response.isSuccessful) {
+                    loadHomeData()
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
             } catch (e: Exception) {
                 onResult(false)
             }
@@ -381,8 +381,8 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
 
                 val entries = users
                     .map { user ->
-                        val player = players.find { it.PlayerUserID == (user.UserID ?: 0) }
-                        val count = if (player != null) findCountByPlayer[player.PlayerID ?: 0] ?: 0 else 0
+                        val player = players.find { it.PlayerUserID == user.UserID }
+                        val count = if (player != null) findCountByPlayer[player.PlayerID] ?: 0 else 0
                         Triple(user, player, count)
                     }
                     .sortedByDescending { it.third }
@@ -419,7 +419,7 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
 
                 val myFinds: List<Find> = if (player != null) {
                     try {
-                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID ?: 0)
+                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID)
                     } catch (_: Exception) { emptyList() }
                 } else emptyList()
 
