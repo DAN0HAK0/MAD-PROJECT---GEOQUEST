@@ -1,194 +1,187 @@
 package com.dan.mad_project_geoquest.api
 
+import okhttp3.ResponseBody
+import retrofit2.Response
 import retrofit2.http.*
 
 interface GeoQuestApiService {
 
-    // ── Users ────────────────────────────────────────────────────
-    @GET("api/users")
+    // ── Users ─────────────────────────────────────────────────────
+    @GET("users")
     suspend fun getUsers(@Query("key") key: String = API_KEY): List<User>
 
-    @GET("api/users/{id}")
+    @GET("users/{id}")
     suspend fun getUserById(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): User
 
-    @POST("api/users")
-    @Headers("Content-Type: application/json")
+    @POST("users")
     suspend fun createUser(
-        @Body user: User,
+        @Body user: UserPayload,
         @Query("key") key: String = API_KEY
-    ): List<User>
+    ): Response<ResponseBody>
 
-    @PUT("api/users/{id}")
-    @Headers("Content-Type: application/json")
+    @PUT("users/{id}")
     suspend fun updateUser(
         @Path("id") id: Int,
-        @Body user: User,
+        @Body user: UserPayload,
         @Query("key") key: String = API_KEY
-    ): User
+    ): Response<ResponseBody>
 
-    @DELETE("api/users/{id}")
+    @DELETE("users/{id}")
     suspend fun deleteUser(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
-    )
+    ): Response<Unit>
 
-    // ── Events ───────────────────────────────────────────────────
-    @GET("api/events")
+    // ── Events ────────────────────────────────────────────────────
+    @GET("events")
     suspend fun getEvents(@Query("key") key: String = API_KEY): List<Event>
 
-    @GET("api/events/{id}")
+    @GET("events/{id}")
     suspend fun getEventById(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): Event
 
-    @GET("api/events/users/{id}")
+    @GET("events/users/{id}")
     suspend fun getEventsByUser(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): List<Event>
 
-    @POST("api/events")
-    @Headers("Content-Type: application/json")
+    @POST("events")
     suspend fun createEvent(
-        @Body event: Event,
+        @Body event: EventPayload,
         @Query("key") key: String = API_KEY
-    ): List<Event>
+    ): Response<ResponseBody>
 
-    @PUT("api/events/{id}")
-    @Headers("Content-Type: application/json")
+    @PUT("events/{id}")
     suspend fun updateEvent(
         @Path("id") id: Int,
-        @Body event: Event,
+        @Body event: EventPayload,
         @Query("key") key: String = API_KEY
-    ): Event
+    ): Response<ResponseBody>
 
-    @DELETE("api/events/{id}")
+    @DELETE("events/{id}")
     suspend fun deleteEvent(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
-    )
+    ): Response<Unit>
 
-    // ── Status ───────────────────────────────────────────────────
-    @GET("api/status")
+    // ── Status ────────────────────────────────────────────────────
+    @GET("status")
     suspend fun getStatuses(@Query("key") key: String = API_KEY): List<Status>
 
-    // ── Players ──────────────────────────────────────────────────
-    @GET("api/players")
+    // ── Players ───────────────────────────────────────────────────
+    @GET("players")
     suspend fun getPlayers(@Query("key") key: String = API_KEY): List<Player>
 
-    @GET("api/players/{id}")
+    @GET("players/{id}")
     suspend fun getPlayerById(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): Player
 
-    @GET("api/players/events/{id}")
+    @GET("players/events/{id}")
     suspend fun getPlayersByEvent(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): List<Player>
 
-    @POST("api/players")
-    @Headers("Content-Type: application/json")
+    @POST("players")
     suspend fun createPlayer(
-        @Body player: Player,
+        @Body player: PlayerPayload,
         @Query("key") key: String = API_KEY
-    ): List<Player>
-    @PUT("api/players/{id}")
-    @Headers("Content-Type: application/json")
+    ): Response<ResponseBody>
+
+    @PUT("players/{id}")
     suspend fun updatePlayer(
         @Path("id") id: Int,
-        @Body player: Player,
+        @Body player: PlayerPayload,
         @Query("key") key: String = API_KEY
-    ): Player
+    ): Response<ResponseBody>
 
-    @DELETE("api/players/{id}")
+    @DELETE("players/{id}")
     suspend fun deletePlayer(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
-    )
+    ): Response<Unit>
 
-    // ── Caches ───────────────────────────────────────────────────
-    @GET("api/caches")
+    // ── Caches ────────────────────────────────────────────────────
+    @GET("caches")
     suspend fun getCaches(@Query("key") key: String = API_KEY): List<Cache>
 
-    @GET("api/caches/{id}")
+    @GET("caches/{id}")
     suspend fun getCacheById(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): Cache
 
-    @GET("api/caches/events/{id}")
+    @GET("caches/events/{id}")
     suspend fun getCachesByEvent(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): List<Cache>
 
-    @POST("api/caches")
-    @Headers("Content-Type: application/json")
+    @POST("caches")
     suspend fun createCache(
-        @Body cache: Cache,
+        @Body cache: CachePayload,
         @Query("key") key: String = API_KEY
-    ): List<Cache>
+    ): Response<ResponseBody>
 
-    @PUT("api/caches/{id}")
-    @Headers("Content-Type: application/json")
+    @PUT("caches/{id}")
     suspend fun updateCache(
         @Path("id") id: Int,
-        @Body cache: Cache,
+        @Body cache: CachePayload,
         @Query("key") key: String = API_KEY
-    ): Cache
+    ): Response<ResponseBody>
 
-    @DELETE("api/caches/{id}")
+    @DELETE("caches/{id}")
     suspend fun deleteCache(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
-    )
+    ): Response<Unit>
 
-    // ── Finds ────────────────────────────────────────────────────
-    @GET("api/finds")
+    // ── Finds ─────────────────────────────────────────────────────
+    @GET("finds")
     suspend fun getFinds(@Query("key") key: String = API_KEY): List<Find>
 
-    @GET("api/finds/{id}")
+    @GET("finds/{id}")
     suspend fun getFindById(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): Find
 
-    @GET("api/finds/events/{id}")
+    @GET("finds/events/{id}")
     suspend fun getFindsByEvent(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): List<Find>
 
-    @GET("api/finds/players/{id}")
+    @GET("finds/players/{id}")
     suspend fun getFindsByPlayer(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
     ): List<Find>
 
-    @POST("api/finds")
-    @Headers("Content-Type: application/json")
+    @POST("finds")
     suspend fun createFind(
-        @Body find: Find,
+        @Body find: FindPayload,
         @Query("key") key: String = API_KEY
-    ): List<Find>
+    ): Response<ResponseBody>
 
-    @PUT("api/finds/{id}")
-    @Headers("Content-Type: application/json")
+    @PUT("finds/{id}")
     suspend fun updateFind(
         @Path("id") id: Int,
-        @Body find: Find,
+        @Body find: FindPayload,
         @Query("key") key: String = API_KEY
-    ): Find
+    ): Response<ResponseBody>
 
-    @DELETE("api/finds/{id}")
+    @DELETE("finds/{id}")
     suspend fun deleteFind(
         @Path("id") id: Int,
         @Query("key") key: String = API_KEY
-    )
+    ): Response<Unit>
 }
