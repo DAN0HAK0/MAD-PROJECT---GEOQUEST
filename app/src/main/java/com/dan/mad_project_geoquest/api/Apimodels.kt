@@ -1,9 +1,7 @@
 package com.dan.mad_project_geoquest.api
 
-// ─── Exact field names from GeoQuest API spec ───────────────────
-
 data class User(
-    val UserID: Int = 0,
+    val UserID: Int? = null,
     val UserFirstname: String = "",
     val UserLastname: String = "",
     val UserPhone: String = "",
@@ -16,7 +14,7 @@ data class User(
 )
 
 data class Event(
-    val EventID: Int = 0,
+    val EventID: Int? = null,
     val EventName: String = "",
     val EventDescription: String = "",
     val EventOwnerID: Int = 0,
@@ -29,13 +27,13 @@ data class Event(
 )
 
 data class Status(
-    val StatusID: Int = 0,
+    val StatusID: Int? = null,
     val StatusName: String = "",
     val StatusOrder: Int = 0
 )
 
 data class Player(
-    val PlayerID: Int = 0,
+    val PlayerID: Int? = null,
     val PlayerUserID: Int = 0,
     val PlayerEventID: Int = 0,
     val PlayerUser: User? = null,
@@ -43,7 +41,7 @@ data class Player(
 )
 
 data class Cache(
-    val CacheID: Int = 0,
+    val CacheID: Int? = null,
     val CacheName: String = "",
     val CacheDescription: String = "",
     val CacheEventID: Int = 0,
@@ -56,7 +54,7 @@ data class Cache(
 )
 
 data class Find(
-    val FindID: Int = 0,
+    val FindID: Int? = null,
     val FindPlayerID: Int = 0,
     val FindCacheID: Int = 0,
     val FindDatetime: String = "",
