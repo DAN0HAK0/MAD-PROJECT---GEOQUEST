@@ -6,10 +6,13 @@ import android.location.Location
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dan.mad_project_geoquest.api.Cache
+import com.dan.mad_project_geoquest.api.CachePayload
 import com.dan.mad_project_geoquest.api.Event
+import com.dan.mad_project_geoquest.api.EventPayload
 import com.dan.mad_project_geoquest.api.Find
 import com.dan.mad_project_geoquest.api.FindPayload
 import com.dan.mad_project_geoquest.api.Player
+import com.dan.mad_project_geoquest.api.PlayerPayload
 import com.dan.mad_project_geoquest.api.RetrofitClient
 import com.dan.mad_project_geoquest.api.SessionManager
 import com.dan.mad_project_geoquest.api.User
@@ -54,6 +57,7 @@ data class HomeUiState(
     val allCaches: List<Cache> = emptyList(),
     val myFinds: List<Find> = emptyList(),
     val activeEvents: List<Event> = emptyList(),
+    val allPlayers: List<Player> = emptyList(),
     val errorMessage: String? = null
 )
 
@@ -110,7 +114,7 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
     private val _statsUiState = MutableStateFlow(StatsUiState())
     val statsUiState: StateFlow<StatsUiState> = _statsUiState.asStateFlow()
 
-    // All caches from API (used by map and home)
+    // All caches from API
     private val _allCaches = MutableStateFlow<List<Cache>>(emptyList())
     val allCaches: StateFlow<List<Cache>> = _allCaches.asStateFlow()
 
@@ -122,7 +126,11 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
-            _userLocation.value = result.lastLocation
+            val location = result.lastLocation
+            _userLocation.value = location
+
+            // Update user location in API
+            location?.let { updateUserLocationInApi(it) }
         }
     }
 
@@ -137,6 +145,30 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
+
+    // ── Update user location in API ───────────────────────────────
+
+    private fun updateUserLocationInApi(location: Location) {
+        val user = SessionManager.currentUser ?: return
+        viewModelScope.launch {
+            try {
+                RetrofitClient.instance.updateUser(
+                    id = user.UserID,
+                    user = UserPayload(
+                        UserFirstname = user.UserFirstname,
+                        UserLastname = user.UserLastname,
+                        UserPhone = user.UserPhone,
+                        UserUsername = user.UserUsername,
+                        UserPassword = user.UserPassword,
+                        UserLatitude = location.latitude,
+                        UserLongitude = location.longitude,
+                        UserTimestamp = location.time.toDouble(),
+                        UserImageURL = user.UserImageURL
+                    )
+                )
+            } catch (_: Exception) {}
+        }
     }
 
     // ── Login ─────────────────────────────────────────────────────
@@ -311,6 +343,7 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val caches = RetrofitClient.instance.getCaches()
                 val events = RetrofitClient.instance.getEvents()
+                val players = RetrofitClient.instance.getPlayers()
                 _allCaches.value = caches
 
                 val player = SessionManager.currentPlayer
@@ -327,7 +360,8 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                     isLoading = false,
                     allCaches = caches,
                     myFinds = myFinds,
-                    activeEvents = events
+                    activeEvents = events,
+                    allPlayers = players
                 )
             } catch (e: Exception) {
                 _homeUiState.value = _homeUiState.value.copy(
@@ -361,6 +395,50 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 onResult(false)
+            }
+        }
+    }
+
+    // ── Join Event ────────────────────────────────────────────────
+
+    fun joinEvent(event: Event, onResult: (Boolean, String) -> Unit) {
+        val currentUser = SessionManager.currentUser ?: run {
+            onResult(false, "You must be logged in")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val players = RetrofitClient.instance.getPlayers()
+                val alreadyJoined = players.any {
+                    it.PlayerUserID == currentUser.UserID &&
+                            it.PlayerEventID == event.EventID
+                }
+
+                if (alreadyJoined) {
+                    onResult(false, "Already joined this event")
+                    return@launch
+                }
+
+                val response = RetrofitClient.instance.createPlayer(
+                    PlayerPayload(
+                        PlayerUserID = currentUser.UserID,
+                        PlayerEventID = event.EventID
+                    )
+                )
+
+                if (response.isSuccessful) {
+                    val updatedPlayers = RetrofitClient.instance.getPlayers()
+                    SessionManager.currentPlayer = updatedPlayers.find {
+                        it.PlayerUserID == currentUser.UserID
+                    }
+                    loadHomeData()
+                    onResult(true, "Joined ${event.EventName}!")
+                } else {
+                    onResult(false, "Failed to join: HTTP ${response.code()}")
+                }
+            } catch (e: Exception) {
+                onResult(false, "Error: ${e.localizedMessage}")
             }
         }
     }

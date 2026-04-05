@@ -33,7 +33,8 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
     var selectedCache by remember { mutableStateOf<Cache?>(null) }
     var logFindResult by remember { mutableStateOf<String?>(null) }
 
-    // Load all caches for the map
+    val cacheSnapshot = remember(allCaches) { allCaches.toList() }
+
     LaunchedEffect(Unit) {
         cacheViewModel.loadAllCaches()
     }
@@ -50,7 +51,6 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
                     val kingston = LatLng(51.4123, -0.3007)
                     googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(kingston, 14f))
 
-                    // Marker click → show bottom sheet
                     googleMap.setOnMarkerClickListener { marker ->
                         val cache = marker.tag as? Cache
                         selectedCache = cache
@@ -66,13 +66,14 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
                     userLocation?.let { loc ->
                         val userLatLng = LatLng(loc.latitude, loc.longitude)
                         if (!hasMovedCamera) {
-                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 15f))
+                            googleMap.animateCamera(
+                                CameraUpdateFactory.newLatLngZoom(userLatLng, 15f)
+                            )
                             hasMovedCamera = true
                         }
                     }
 
-                    // Place a marker for every cache from the API
-                    allCaches.forEach { cache ->
+                    cacheSnapshot.forEach { cache ->
                         if (cache.CacheLatitude != 0.0 && cache.CacheLongitude != 0.0) {
                             val position = LatLng(cache.CacheLatitude, cache.CacheLongitude)
                             val marker: Marker? = googleMap.addMarker(
@@ -84,6 +85,12 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
                             )
                             marker?.tag = cache
                         }
+                    }
+
+                    googleMap.setOnMarkerClickListener { marker ->
+                        val cache = marker.tag as? Cache
+                        selectedCache = cache
+                        true
                     }
                 }
             }
@@ -107,7 +114,7 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
             )
         }
 
-        // Snackbar for log find result
+        // Log find result snackbar
         logFindResult?.let { msg ->
             Snackbar(
                 modifier = Modifier
@@ -120,7 +127,6 @@ fun MapScreen(cacheViewModel: CacheViewModel) {
         }
     }
 
-    // ── Cache detail bottom sheet ──────────────────────────────────
     selectedCache?.let { cache ->
         CacheBottomSheet(
             cache = cache,
