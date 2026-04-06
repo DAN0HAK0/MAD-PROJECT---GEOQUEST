@@ -373,12 +373,17 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun logFind(cache: Cache, onResult: (Boolean) -> Unit) {
+        android.util.Log.d("LOGFIND", "Player: ${SessionManager.currentPlayer?.PlayerID}")
+        android.util.Log.d("LOGFIND", "User: ${SessionManager.currentUser?.UserID}")
+        android.util.Log.d("LOGFIND", "Cache: ${cache.CacheID}")
         val player = SessionManager.currentPlayer ?: run { onResult(false); return }
 
         viewModelScope.launch {
             try {
                 val isoDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK)
                     .format(Date())
+
+                android.util.Log.d("LOGFIND", "Sending find — PlayerID: ${player.PlayerID}, CacheID: ${cache.CacheID}, Date: $isoDate")
 
                 val response = RetrofitClient.instance.createFind(
                     FindPayload(
@@ -387,6 +392,10 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                         FindDatetime = isoDate
                     )
                 )
+
+                android.util.Log.d("LOGFIND", "Response code: ${response.code()}")
+                android.util.Log.d("LOGFIND", "Response body: ${response.errorBody()?.string()}")
+
                 if (response.isSuccessful) {
                     loadHomeData()
                     onResult(true)
@@ -394,6 +403,7 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                     onResult(false)
                 }
             } catch (e: Exception) {
+                android.util.Log.e("LOGFIND", "Exception: ${e.localizedMessage}")
                 onResult(false)
             }
         }

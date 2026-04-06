@@ -111,5 +111,5 @@ data class FindPayload(
     @SerializedName("FindPlayerID") val FindPlayerID: Int,
     @SerializedName("FindCacheID") val FindCacheID: Int,
     @SerializedName("FindDatetime") val FindDatetime: String,
-    @SerializedName("FindImageURL") val FindImageURL: String = ""
+    @SerializedName("FindImageURL") val FindImageURL: String = "https://static.generated.photos/vue-static/face-generator/landing/wall/1.jpg"
 )
