@@ -16,7 +16,7 @@ sealed interface NavObjects : NavKey {
     data object Home : NavObjects
 
     @Serializable
-    data object Blank : NavObjects  // Leaderboard
+    data object Blank : NavObjects  // Originally had this as blank screen but now changed to leaderboard screen
 
     @Serializable
     data object Map : NavObjects
@@ -26,4 +26,7 @@ sealed interface NavObjects : NavKey {
 
     @Serializable
     data object Settings : NavObjects
+
+    @Serializable
+    data object Admin : NavObjects
 }
