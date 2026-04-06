@@ -61,8 +61,6 @@ fun LoginScreen(
         ) {
             Spacer(Modifier.height(48.dp))
 
-            Text(text = "📍", fontSize = 64.sp)
-            Spacer(Modifier.height(12.dp))
             Text(
                 text = "GeoQuest",
                 fontSize = 36.sp,

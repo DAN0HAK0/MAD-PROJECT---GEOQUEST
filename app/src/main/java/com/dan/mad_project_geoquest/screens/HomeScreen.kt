@@ -24,8 +24,6 @@ import com.dan.mad_project_geoquest.viewmodel.CacheViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-// ─── Shared utility functions ─────────────────────────────────────
-
 fun formatEventDate(dateStr: String): String {
     return try {
         val input = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK)
@@ -38,56 +36,71 @@ fun formatEventDate(dateStr: String): String {
 
 fun eventStatusLabel(statusId: Int): Pair<String, Color> {
     return when (statusId) {
-        1 -> Pair("⏳ Pending", Color(0xFFFF9800))
-        2 -> Pair("🟢 Active", Color(0xFF4CAF50))
-        3 -> Pair("⏸ Paused", Color(0xFF9E9E9E))
-        4 -> Pair("❌ Cancelled", Color(0xFFF44336))
-        5 -> Pair("✅ Completed", Color(0xFF2196F3))
-        else -> Pair("Unknown", Color.Gray)
+        1 -> Pair("Pending", Color(0xFFFF9800))
+        2 -> Pair("Active", Color(0xFF4CAF50))
+        3 -> Pair("Paused", Color(0xFF9E9E9E))
+        4 -> Pair("Cancelled", Color(0xFFF44336))
+        5 -> Pair("Completed", Color(0xFF2196F3))
+        else -> Pair("Active", Color(0xFF4CAF50))
     }
 }
-
-// ─── HomeScreen ───────────────────────────────────────────────────
 
 @Composable
 fun HomeScreen(cacheViewModel: CacheViewModel) {
     val homeState by cacheViewModel.homeUiState.collectAsState()
     val user = SessionManager.currentUser
     var joinMessage by remember { mutableStateOf<String?>(null) }
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val tabs = listOf("All Events", "Completed", "In Progress")
 
     LaunchedEffect(Unit) {
         cacheViewModel.loadHomeData()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Column(modifier = Modifier.fillMaxSize()) {
+
+            Column(
+                modifier = Modifier.padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 16.dp,
+                    bottom = 0.dp
+                )
             ) {
-                Column {
-                    Text(
-                        text = "GeoQuest",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Welcome, ${user?.UserUsername ?: "Explorer"}!",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "GeoQuest",
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Welcome, ${user?.UserUsername ?: "Explorer"}!",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(onClick = { cacheViewModel.loadHomeData() }) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                    }
                 }
-                IconButton(onClick = { cacheViewModel.loadHomeData() }) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
-                }
+                Spacer(Modifier.height(12.dp))
             }
 
-            Spacer(Modifier.height(16.dp))
+            TabRow(selectedTabIndex = selectedTab) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = { Text(title) }
+                    )
+                }
+            }
 
             if (homeState.isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -97,44 +110,79 @@ fun HomeScreen(cacheViewModel: CacheViewModel) {
             }
 
             homeState.errorMessage?.let { err ->
-                Text(text = err, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = err,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
 
-            if (homeState.activeEvents.isEmpty()) {
+            val foundCacheIds = homeState.myFinds.map { it.FindCacheID }.toSet()
+            val currentUser = SessionManager.currentUser
+
+            val filteredEvents = when (selectedTab) {
+                0 -> homeState.activeEvents
+                1 -> homeState.activeEvents.filter { event ->
+                    val eventCaches = homeState.allCaches.filter {
+                        it.CacheEventID == event.EventID
+                    }
+                    val isJoined = homeState.allPlayers.any {
+                        it.PlayerUserID == currentUser?.UserID &&
+                                it.PlayerEventID == event.EventID
+                    }
+                    if (!isJoined || eventCaches.isEmpty()) return@filter false
+                    val foundCount = eventCaches.count { it.CacheID in foundCacheIds }
+                    foundCount == eventCaches.size
+                }
+                2 -> homeState.activeEvents.filter { event ->
+                    val eventCaches = homeState.allCaches.filter {
+                        it.CacheEventID == event.EventID
+                    }
+                    val isJoined = homeState.allPlayers.any {
+                        it.PlayerUserID == currentUser?.UserID &&
+                                it.PlayerEventID == event.EventID
+                    }
+                    if (!isJoined || eventCaches.isEmpty()) return@filter false
+                    val foundCount = eventCaches.count { it.CacheID in foundCacheIds }
+                    foundCount < eventCaches.size
+                }
+                else -> emptyList()
+            }
+
+            if (filteredEvents.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "🗺️", fontSize = 48.sp)
-                        Spacer(Modifier.height(12.dp))
                         Text(
-                            text = "No events available",
+                            text = when (selectedTab) {
+                                0 -> "No events available"
+                                1 -> "No completed events yet"
+                                else -> "No events in progress"
+                            },
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = "Check back soon!",
+                            text = when (selectedTab) {
+                                0 -> "Check back soon!"
+                                1 -> "Find all caches in an event to complete it"
+                                else -> "Join an event and start finding caches"
+                            },
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             } else {
-                val foundCacheIds = homeState.myFinds.map { it.FindCacheID }.toSet()
-                val currentUser = SessionManager.currentUser
-
-                Text(
-                    text = "Active Events",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(homeState.activeEvents) { event ->
+                LazyColumn(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filteredEvents) { event ->
                         val eventCaches = homeState.allCaches.filter {
                             it.CacheEventID == event.EventID
                         }
@@ -183,9 +231,8 @@ fun EventCard(
     val foundCount = eventCaches.count { it.CacheID in foundCacheIds }
     val totalCount = eventCaches.size
     val progress = if (totalCount > 0) foundCount.toFloat() / totalCount.toFloat() else 0f
-    val statusPair = eventStatusLabel(event.EventStatusID)
-    val statusLabel = statusPair.first
-    val statusColor = statusPair.second
+    val statusLabel = eventStatusLabel(event.EventStatusID).first
+    val statusColor = eventStatusLabel(event.EventStatusID).second
 
     Card(
         modifier = Modifier
@@ -198,6 +245,7 @@ fun EventCard(
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -212,10 +260,12 @@ fun EventCard(
                     Spacer(Modifier.height(2.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = if (event.EventIspublic) "🌍 Public" else "🔒 Private",
+                            text = if (event.EventIspublic) "Public" else "Private",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Text(text = "|", fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = statusLabel,
                             fontSize = 11.sp,
@@ -224,7 +274,7 @@ fun EventCard(
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "📅 ${formatEventDate(event.EventStart)} — ${formatEventDate(event.EventFinish)}",
+                        text = "${formatEventDate(event.EventStart)} — ${formatEventDate(event.EventFinish)}",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -234,7 +284,7 @@ fun EventCard(
                     Icon(
                         imageVector = if (expanded) Icons.Filled.KeyboardArrowUp
                         else Icons.Filled.KeyboardArrowDown,
-                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
@@ -258,7 +308,9 @@ fun EventCard(
                 Spacer(Modifier.height(4.dp))
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp),
                     trackColor = MaterialTheme.colorScheme.surface
                 )
 
@@ -289,7 +341,7 @@ fun EventCard(
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "🗺️ $totalCount caches to discover",
+                    text = "$totalCount caches to discover",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
@@ -311,14 +363,14 @@ fun CacheListItem(cache: Cache, isFound: Boolean) {
         )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = if (isFound) "✅" else "🔒", fontSize = 22.sp)
-            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (isFound) cache.CacheName else "???",
+                    text = if (isFound) cache.CacheName else "Locked",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = if (isFound)
