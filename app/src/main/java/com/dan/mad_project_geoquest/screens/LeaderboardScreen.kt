@@ -13,7 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dan.mad_project_geoquest.viewmodel.CacheViewModel
@@ -71,9 +73,31 @@ fun LeaderboardScreen(cacheViewModel: CacheViewModel) {
                 Text("No data yet — go find some caches!", fontSize = 16.sp)
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                itemsIndexed(state.entries) { _, entry ->
-                    LeaderboardRow(entry = entry)
+            // Podium for top 3
+            if (state.entries.size >= 3) {
+                Podium(
+                    first = state.entries[0],
+                    second = state.entries[1],
+                    third = state.entries[2]
+                )
+                Spacer(Modifier.height(24.dp))
+            }
+
+            // Rest of the list from 4th place onwards
+            val remainingEntries = if (state.entries.size > 3) state.entries.drop(3) else emptyList()
+
+            if (remainingEntries.isNotEmpty()) {
+                Text(
+                    text = "Other Players",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    itemsIndexed(remainingEntries) { _, entry ->
+                        LeaderboardRow(entry = entry)
+                    }
                 }
             }
         }
@@ -81,15 +105,110 @@ fun LeaderboardScreen(cacheViewModel: CacheViewModel) {
 }
 
 @Composable
-fun LeaderboardRow(entry: LeaderboardEntry) {
-    val isTop3 = entry.rank <= 3
-    val medal = when (entry.rank) {
-        1 -> "🥇"
-        2 -> "🥈"
-        3 -> "🥉"
-        else -> null
-    }
+fun Podium(
+    first: LeaderboardEntry,
+    second: LeaderboardEntry,
+    third: LeaderboardEntry
+) {
+    val goldColor = Color(0xFFFFD700)
+    val silverColor = Color(0xFFC0C0C0)
+    val bronzeColor = Color(0xFFCD7F32)
 
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        // 2nd place
+        PodiumColumn(
+            entry = second,
+            medal = "🥈",
+            color = silverColor,
+            heightDp = 90,
+            rankLabel = "2nd"
+        )
+
+        // 1st place — tallest
+        PodiumColumn(
+            entry = first,
+            medal = "🥇",
+            color = goldColor,
+            heightDp = 120,
+            rankLabel = "1st"
+        )
+
+        // 3rd place
+        PodiumColumn(
+            entry = third,
+            medal = "🥉",
+            color = bronzeColor,
+            heightDp = 70,
+            rankLabel = "3rd"
+        )
+    }
+}
+
+@Composable
+fun PodiumColumn(
+    entry: LeaderboardEntry,
+    medal: String,
+    color: Color,
+    heightDp: Int,
+    rankLabel: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        // Medal emoji
+        Text(text = medal, fontSize = 28.sp)
+
+        Spacer(Modifier.height(4.dp))
+
+        // Username
+        Text(
+            text = entry.username,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            color = if (entry.isCurrentUser) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurface
+        )
+
+        // Find count
+        Text(
+            text = "${entry.findCount} finds",
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        // Podium block
+        Box(
+            modifier = Modifier
+                .width(90.dp)
+                .height(heightDp.dp)
+                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                .background(color.copy(alpha = 0.85f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = rankLabel,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+fun LeaderboardRow(entry: LeaderboardEntry) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -97,7 +216,7 @@ fun LeaderboardRow(entry: LeaderboardEntry) {
                 MaterialTheme.colorScheme.primaryContainer
             else MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(if (isTop3) 4.dp else 1.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -106,27 +225,19 @@ fun LeaderboardRow(entry: LeaderboardEntry) {
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Rank / medal
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (isTop3) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        else MaterialTheme.colorScheme.surfaceVariant
-                    ),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                if (medal != null) {
-                    Text(medal, fontSize = 20.sp)
-                } else {
-                    Text(
-                        text = "#${entry.rank}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = "#${entry.rank}",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Spacer(Modifier.width(14.dp))

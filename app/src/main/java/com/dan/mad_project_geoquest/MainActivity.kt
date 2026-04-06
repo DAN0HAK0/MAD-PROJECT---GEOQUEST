@@ -14,11 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import com.dan.mad_project_geoquest.api.SessionManager
 import com.dan.mad_project_geoquest.components.BottomNavBar
 import com.dan.mad_project_geoquest.navigation.NavObjects
 import com.dan.mad_project_geoquest.screens.*
 import com.dan.mad_project_geoquest.ui.theme.MadProjectGEOQUESTTheme
 import com.dan.mad_project_geoquest.viewmodel.CacheViewModel
+import com.dan.mad_project_geoquest.screens.AdminScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -59,8 +61,8 @@ class MainActivity : ComponentActivity() {
             MadProjectGEOQUESTTheme {
                 val backStack = remember { mutableStateListOf<Any>(NavObjects.Login) }
                 val currentDestination = backStack.lastOrNull()
+                val isAdmin = SessionManager.isAdmin
 
-                // Hide bottom bar on Login and Register screens
                 val showBottomBar = currentDestination !is NavObjects.Login &&
                         currentDestination !is NavObjects.Register
 
@@ -70,6 +72,7 @@ class MainActivity : ComponentActivity() {
                         if (showBottomBar) {
                             BottomNavBar(
                                 currentDestination = currentDestination,
+                                isAdmin = isAdmin,
                                 onNavigate = { destination ->
                                     if (backStack.lastOrNull()?.javaClass != destination.javaClass) {
                                         backStack.add(destination)
@@ -91,7 +94,11 @@ class MainActivity : ComponentActivity() {
                                             cacheViewModel = cacheViewModel,
                                             onLoginSuccess = {
                                                 backStack.clear()
-                                                backStack.add(NavObjects.Home)
+                                                if (SessionManager.isAdmin) {
+                                                    backStack.add(NavObjects.Admin)
+                                                } else {
+                                                    backStack.add(NavObjects.Home)
+                                                }
                                             },
                                             onNavigateToRegister = {
                                                 backStack.add(NavObjects.Register)
@@ -121,6 +128,16 @@ class MainActivity : ComponentActivity() {
                                 is NavObjects.Settings ->
                                     NavEntry(route) {
                                         SettingsScreen(
+                                            cacheViewModel = cacheViewModel,
+                                            onLogout = {
+                                                backStack.clear()
+                                                backStack.add(NavObjects.Login)
+                                            }
+                                        )
+                                    }
+                                is NavObjects.Admin ->
+                                    NavEntry(route) {
+                                        AdminScreen(
                                             cacheViewModel = cacheViewModel,
                                             onLogout = {
                                                 backStack.clear()
