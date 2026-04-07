@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +21,10 @@ import androidx.compose.ui.unit.sp
 import com.dan.mad_project_geoquest.api.Cache
 import com.dan.mad_project_geoquest.api.Event
 import com.dan.mad_project_geoquest.api.SessionManager
+import com.dan.mad_project_geoquest.ui.theme.Cream
+import com.dan.mad_project_geoquest.ui.theme.DarkBrown
+import com.dan.mad_project_geoquest.ui.theme.Gold
+import com.dan.mad_project_geoquest.ui.theme.Sand
 import com.dan.mad_project_geoquest.viewmodel.CacheViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -45,6 +50,7 @@ fun eventStatusLabel(statusId: Int): Pair<String, Color> {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(cacheViewModel: CacheViewModel) {
     val homeState by cacheViewModel.homeUiState.collectAsState()
@@ -57,132 +63,87 @@ fun HomeScreen(cacheViewModel: CacheViewModel) {
         cacheViewModel.loadHomeData()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-
-            Column(
-                modifier = Modifier.padding(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 16.dp,
-                    bottom = 0.dp
-                )
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
                     Column {
                         Text(
                             text = "GeoQuest",
-                            fontSize = 26.sp,
+                            fontSize = 35.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Welcome, ${user?.UserUsername ?: "Explorer"}!",
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.primary
+                            fontSize = 12.sp,
+                            color = Sand
                         )
                     }
+                },
+                actions = {
                     IconButton(onClick = { cacheViewModel.loadHomeData() }) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
                     }
-                }
-                Spacer(Modifier.height(12.dp))
-            }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBrown,
+                    titleContentColor = Cream,
+                    actionIconContentColor = Cream
+                )
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
 
-            TabRow(selectedTabIndex = selectedTab) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { Text(title) }
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = DarkBrown,
+                    contentColor = Cream,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                            color = Gold
+                        )
+                    }
+                ) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            text = { Text(title) },
+                            selectedContentColor = Cream,
+                            unselectedContentColor = Sand
+                        )
+                    }
+                }
+
+                if (homeState.isLoading) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                    return@Column
+                }
+
+                homeState.errorMessage?.let { err ->
+                    Text(
+                        text = err,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
-            }
 
-            if (homeState.isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-                return@Column
-            }
+                val foundCacheIds = homeState.myFinds.map { it.FindCacheID }.toSet()
+                val currentUser = SessionManager.currentUser
 
-            homeState.errorMessage?.let { err ->
-                Text(
-                    text = err,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-
-            val foundCacheIds = homeState.myFinds.map { it.FindCacheID }.toSet()
-            val currentUser = SessionManager.currentUser
-
-            val filteredEvents = when (selectedTab) {
-                0 -> homeState.activeEvents
-                1 -> homeState.activeEvents.filter { event ->
-                    val eventCaches = homeState.allCaches.filter {
-                        it.CacheEventID == event.EventID
-                    }
-                    val isJoined = homeState.allPlayers.any {
-                        it.PlayerUserID == currentUser?.UserID &&
-                                it.PlayerEventID == event.EventID
-                    }
-                    if (!isJoined || eventCaches.isEmpty()) return@filter false
-                    val foundCount = eventCaches.count { it.CacheID in foundCacheIds }
-                    foundCount == eventCaches.size
-                }
-                2 -> homeState.activeEvents.filter { event ->
-                    val eventCaches = homeState.allCaches.filter {
-                        it.CacheEventID == event.EventID
-                    }
-                    val isJoined = homeState.allPlayers.any {
-                        it.PlayerUserID == currentUser?.UserID &&
-                                it.PlayerEventID == event.EventID
-                    }
-                    if (!isJoined || eventCaches.isEmpty()) return@filter false
-                    val foundCount = eventCaches.count { it.CacheID in foundCacheIds }
-                    foundCount < eventCaches.size
-                }
-                else -> emptyList()
-            }
-
-            if (filteredEvents.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = when (selectedTab) {
-                                0 -> "No events available"
-                                1 -> "No completed events yet"
-                                else -> "No events in progress"
-                            },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = when (selectedTab) {
-                                0 -> "Check back soon!"
-                                1 -> "Find all caches in an event to complete it"
-                                else -> "Join an event and start finding caches"
-                            },
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(filteredEvents) { event ->
+                val filteredEvents = when (selectedTab) {
+                    0 -> homeState.activeEvents
+                    1 -> homeState.activeEvents.filter { event ->
                         val eventCaches = homeState.allCaches.filter {
                             it.CacheEventID == event.EventID
                         }
@@ -190,31 +151,91 @@ fun HomeScreen(cacheViewModel: CacheViewModel) {
                             it.PlayerUserID == currentUser?.UserID &&
                                     it.PlayerEventID == event.EventID
                         }
-                        EventCard(
-                            event = event,
-                            eventCaches = eventCaches,
-                            foundCacheIds = foundCacheIds,
-                            isJoined = isJoined,
-                            onJoin = {
-                                cacheViewModel.joinEvent(event) { _, message ->
-                                    joinMessage = message
-                                }
+                        if (!isJoined || eventCaches.isEmpty()) return@filter false
+                        val foundCount = eventCaches.count { it.CacheID in foundCacheIds }
+                        foundCount == eventCaches.size
+                    }
+                    2 -> homeState.activeEvents.filter { event ->
+                        val eventCaches = homeState.allCaches.filter {
+                            it.CacheEventID == event.EventID
+                        }
+                        val isJoined = homeState.allPlayers.any {
+                            it.PlayerUserID == currentUser?.UserID &&
+                                    it.PlayerEventID == event.EventID
+                        }
+                        if (!isJoined || eventCaches.isEmpty()) return@filter false
+                        val foundCount = eventCaches.count { it.CacheID in foundCacheIds }
+                        foundCount < eventCaches.size
+                    }
+                    else -> emptyList()
+                }
+
+                if (filteredEvents.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = when (selectedTab) {
+                                    0 -> "No events available"
+                                    1 -> "No completed events yet"
+                                    else -> "No events in progress"
+                                },
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = when (selectedTab) {
+                                    0 -> "Check back soon!"
+                                    1 -> "Find all caches in an event to complete it"
+                                    else -> "Join an event and start finding caches"
+                                },
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredEvents) { event ->
+                            val eventCaches = homeState.allCaches.filter {
+                                it.CacheEventID == event.EventID
                             }
-                        )
+                            val isJoined = homeState.allPlayers.any {
+                                it.PlayerUserID == currentUser?.UserID &&
+                                        it.PlayerEventID == event.EventID
+                            }
+                            EventCard(
+                                event = event,
+                                eventCaches = eventCaches,
+                                foundCacheIds = foundCacheIds,
+                                isJoined = isJoined,
+                                onJoin = {
+                                    cacheViewModel.joinEvent(event) { _, message ->
+                                        joinMessage = message
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        joinMessage?.let { msg ->
-            Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp),
-                action = {
-                    TextButton(onClick = { joinMessage = null }) { Text("OK") }
-                }
-            ) { Text(msg) }
+            joinMessage?.let { msg ->
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp),
+                    action = {
+                        TextButton(onClick = { joinMessage = null }) { Text("OK") }
+                    }
+                ) { Text(msg) }
+            }
         }
     }
 }
@@ -264,8 +285,11 @@ fun EventCard(
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Text(text = "|", fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = "|",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Text(
                             text = statusLabel,
                             fontSize = 11.sp,

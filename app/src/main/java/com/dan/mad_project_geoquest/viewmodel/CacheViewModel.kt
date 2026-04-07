@@ -5,10 +5,9 @@ import android.app.Application
 import android.location.Location
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.dan.mad_project_geoquest.utils.GeoQuestNotificationHelper
 import com.dan.mad_project_geoquest.api.Cache
-import com.dan.mad_project_geoquest.api.CachePayload
 import com.dan.mad_project_geoquest.api.Event
-import com.dan.mad_project_geoquest.api.EventPayload
 import com.dan.mad_project_geoquest.api.Find
 import com.dan.mad_project_geoquest.api.FindPayload
 import com.dan.mad_project_geoquest.api.Player
@@ -346,12 +345,15 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                 val players = RetrofitClient.instance.getPlayers()
                 _allCaches.value = caches
 
-                val player = SessionManager.currentPlayer
-                val myFinds: List<Find> = if (player != null) {
+                // Get finds across ALL player records for this user
+                val currentUser = SessionManager.currentUser
+                val myPlayers = players.filter { it.PlayerUserID == currentUser?.UserID }
+                val myFinds = mutableListOf<Find>()
+                myPlayers.forEach { player ->
                     try {
-                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID)
-                    } catch (_: Exception) { emptyList() }
-                } else emptyList()
+                        myFinds.addAll(RetrofitClient.instance.getFindsByPlayer(player.PlayerID))
+                    } catch (_: Exception) {}
+                }
 
                 val foundCacheIds = myFinds.map { it.FindCacheID }.toSet()
                 _foundCaches.value = caches.filter { it.CacheID in foundCacheIds }
@@ -373,17 +375,19 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun logFind(cache: Cache, onResult: (Boolean) -> Unit) {
-        android.util.Log.d("LOGFIND", "Player: ${SessionManager.currentPlayer?.PlayerID}")
-        android.util.Log.d("LOGFIND", "User: ${SessionManager.currentUser?.UserID}")
-        android.util.Log.d("LOGFIND", "Cache: ${cache.CacheID}")
-        val player = SessionManager.currentPlayer ?: run { onResult(false); return }
+        val currentUser = SessionManager.currentUser ?: run { onResult(false); return }
 
         viewModelScope.launch {
             try {
+                // Find the player record for the event that owns this cache
+                val players = RetrofitClient.instance.getPlayers()
+                val player = players.find {
+                    it.PlayerUserID == currentUser.UserID &&
+                            it.PlayerEventID == cache.CacheEventID
+                } ?: run { onResult(false); return@launch }
+
                 val isoDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK)
                     .format(Date())
-
-                android.util.Log.d("LOGFIND", "Sending find — PlayerID: ${player.PlayerID}, CacheID: ${cache.CacheID}, Date: $isoDate")
 
                 val response = RetrofitClient.instance.createFind(
                     FindPayload(
@@ -393,10 +397,13 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 )
 
-                android.util.Log.d("LOGFIND", "Response code: ${response.code()}")
-                android.util.Log.d("LOGFIND", "Response body: ${response.errorBody()?.string()}")
-
                 if (response.isSuccessful) {
+                    GeoQuestNotificationHelper.sendFoundNotification(
+                        context = getApplication(),
+                        cacheTitle = cache.CacheName,
+                        points = cache.CachePoints.toInt(),
+                        cacheId = cache.CacheID
+                    )
                     loadHomeData()
                     onResult(true)
                 } else {
@@ -440,7 +447,8 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
                 if (response.isSuccessful) {
                     val updatedPlayers = RetrofitClient.instance.getPlayers()
                     SessionManager.currentPlayer = updatedPlayers.find {
-                        it.PlayerUserID == currentUser.UserID
+                        it.PlayerUserID == currentUser.UserID &&
+                                it.PlayerEventID == event.EventID
                     }
                     loadHomeData()
                     onResult(true, "Joined ${event.EventName}!")
@@ -503,13 +511,18 @@ class CacheViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val user = SessionManager.currentUser
-                val player = SessionManager.currentPlayer
 
-                val myFinds: List<Find> = if (player != null) {
+                // Get ALL player records for this user across all events
+                val allPlayers = RetrofitClient.instance.getPlayers()
+                val myPlayers = allPlayers.filter { it.PlayerUserID == user?.UserID }
+
+                // Collect finds across all player records
+                val myFinds = mutableListOf<Find>()
+                myPlayers.forEach { player ->
                     try {
-                        RetrofitClient.instance.getFindsByPlayer(player.PlayerID)
-                    } catch (_: Exception) { emptyList() }
-                } else emptyList()
+                        myFinds.addAll(RetrofitClient.instance.getFindsByPlayer(player.PlayerID))
+                    } catch (_: Exception) {}
+                }
 
                 val totalPoints = myFinds.sumOf { it.FindCache?.CachePoints ?: 0.0 }
 
