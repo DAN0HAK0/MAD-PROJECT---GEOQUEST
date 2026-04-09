@@ -39,11 +39,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val _foundCaches = MutableStateFlow<List<Cache>>(emptyList())
     val foundCaches: StateFlow<List<Cache>> = _foundCaches.asStateFlow()
 
-    // Shared message shown as a snackbar in MapScreen after any logFind call
+
     private val _logFindMessage = MutableStateFlow<String?>(null)
     val logFindMessage: StateFlow<String?> = _logFindMessage.asStateFlow()
 
-    // Cache IDs whose clue has been shown this session — resets when app is killed
     private val _sessionClueUnlockedIds = MutableStateFlow<Set<Int>>(emptySet())
     val sessionClueUnlockedIds: StateFlow<Set<Int>> = _sessionClueUnlockedIds.asStateFlow()
 
@@ -108,8 +107,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
                 val allEvents = RetrofitClient.instance.getEvents()
 
-                // Event IDs that belong to private events owned by the current user —
-                // caches in these events should not appear on the map for that user
+
                 val ownedPrivateEventIds = allEvents
                     .filter { !it.EventIspublic && it.EventOwnerID == currentUser?.UserID }
                     .map { it.EventID }
@@ -117,7 +115,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
                 val allCaches = RetrofitClient.instance.getCaches()
 
-                // Exclude caches linked to the user's own private events
+
                 val visibleCaches = allCaches.filter { it.CacheEventID !in ownedPrivateEventIds }
                 _allCaches.value = visibleCaches
 

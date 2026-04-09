@@ -25,8 +25,6 @@ import com.dan.mad_project_geoquest.api.EventPayload
 import com.dan.mad_project_geoquest.api.SessionManager
 import com.dan.mad_project_geoquest.api.User
 
-// ── Edit Event Form ───────────────────────────────────────────────
-
 @Composable
 fun AdminEditEventForm(event: Event, onSave: (EventPayload) -> Unit, onCancel: () -> Unit) {
     var eventName        by remember { mutableStateOf(event.EventName) }
@@ -126,7 +124,7 @@ fun AdminEditEventForm(event: Event, onSave: (EventPayload) -> Unit, onCancel: (
     }
 }
 
-// ── Edit Cache Dialog ─────────────────────────────────────────────
+
 
 @Composable
 fun AdminEditCacheDialog(cache: Cache, onDismiss: () -> Unit, onSave: (CachePayload) -> Unit) {
@@ -183,7 +181,7 @@ fun AdminEditCacheDialog(cache: Cache, onDismiss: () -> Unit, onSave: (CachePayl
     )
 }
 
-// ── Delete User Dialog ────────────────────────────────────────────
+
 
 @Composable
 fun AdminDeleteUserDialog(

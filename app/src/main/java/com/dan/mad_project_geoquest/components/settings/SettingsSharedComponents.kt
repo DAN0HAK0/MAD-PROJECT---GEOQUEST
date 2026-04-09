@@ -17,7 +17,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// ── Reusable layout composables ───────────────────────────────────
 
 @Composable
 fun SectionTitle(text: String) {
@@ -59,7 +58,7 @@ fun ToggleRow(label: String, sublabel: String, checked: Boolean, onToggle: (Bool
     }
 }
 
-// ── Password field ────────────────────────────────────────────────
+// Password changing
 
 @Composable
 fun PasswordField(
@@ -93,7 +92,7 @@ fun PasswordField(
     )
 }
 
-// ── Delete Account Dialog ─────────────────────────────────────────
+//Warning message to user notifiying them that they are deleting their account and tol do fthe risks
 
 @Composable
 fun DeleteAccountDialog(

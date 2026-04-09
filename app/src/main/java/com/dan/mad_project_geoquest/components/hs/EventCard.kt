@@ -59,7 +59,7 @@ fun EventCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // ── Header row ────────────────────────────────────────
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -93,7 +93,6 @@ fun EventCard(
                 }
             }
 
-            // ── Joined: progress + expandable cache list ──────────
             if (showAsJoined) {
                 Spacer(Modifier.height(10.dp))
                 Text(
@@ -132,7 +131,6 @@ fun EventCard(
                     }
                 }
 
-                // ── Not joined: description preview ───────────────────
             } else {
                 if (event.EventDescription.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
@@ -153,7 +151,7 @@ fun EventCard(
     }
 }
 
-// ── Small helper: just the title / meta text block ────────────────
+
 
 @Composable
 private fun EventCardHeader(

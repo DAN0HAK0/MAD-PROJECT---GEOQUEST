@@ -47,7 +47,7 @@ fun MapScreen(
     val cacheSnapshot = remember(allCaches) { allCaches.toList() }
     val foundCacheIds = remember(foundCaches) { foundCaches.map { it.CacheID }.toSet() }
 
-    // Cache within 50m — eligible to log
+
     val nearbyCache = remember(userLocation, allCaches) {
         val loc = userLocation ?: return@remember null
         allCaches
@@ -64,7 +64,6 @@ fun MapScreen(
             }
     }
 
-    // All unfound caches within 200m that have a clue
     val clueCaches = remember(userLocation, allCaches) {
         val loc = userLocation ?: return@remember emptyList()
         allCaches
@@ -79,7 +78,6 @@ fun MapScreen(
             }
     }
 
-    // Fire clue notification only once per cache per session
     LaunchedEffect(clueCaches) {
         clueCaches.forEach { cache ->
             if (cache.CacheID !in sessionClueUnlocked) {
@@ -98,7 +96,6 @@ fun MapScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // ── Google Map ────────────────────────────────────────────
         AndroidView(
             factory = { mapView.apply {
                 getMapAsync { googleMap ->
@@ -157,14 +154,14 @@ fun MapScreen(
             }
         )
 
-        // ── Top-left: cache count ─────────────────────────────────
+        // checks how many caches have loded in
         CacheCountOverlay(
             cacheCount = allCaches.size,
             modifier = Modifier.align(Alignment.TopStart).padding(12.dp)
         )
 
-        // ── Top-right: legend + compass stacked ───────────────────
-        Column(
+            //Compass for maps (helps with clues)
+            Column(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(12.dp),
@@ -175,7 +172,6 @@ fun MapScreen(
             MapCompassOverlay()
         }
 
-        // ── Snackbar ──────────────────────────────────────────────
         logFindResult?.let { msg ->
             Snackbar(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
@@ -186,7 +182,6 @@ fun MapScreen(
         }
     }
 
-    // ── Bottom sheet — passes sessionClueUnlocked so locked caches can show clue
     selectedCache?.let { cache ->
         CacheBottomSheet(
             cache = cache,
@@ -198,7 +193,7 @@ fun MapScreen(
         )
     }
 
-    // ── Photo-choice dialog ───────────────────────────────────────
+    //Message to give user option for photo choice
     cacheToLog?.let { cache ->
         LogFindChoiceDialog(
             cacheName = cache.CacheName,

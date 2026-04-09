@@ -22,7 +22,7 @@ fun CacheBottomSheet(
     cache: Cache,
     isInRange: Boolean,
     isFound: Boolean,
-    clueUnlocked: Boolean,       // true if user walked within 200m this session
+    clueUnlocked: Boolean,
     onDismiss: () -> Unit,
     onLogFind: () -> Unit
 ) {
@@ -44,7 +44,6 @@ fun CacheBottomSheet(
     }
 }
 
-// ── Locked cache ──────────────────────────────────────────────────
 
 @Composable
 fun LockedCacheContent(cache: Cache, clueUnlocked: Boolean) {
@@ -59,7 +58,6 @@ fun LockedCacheContent(cache: Cache, clueUnlocked: Boolean) {
     }
     Spacer(Modifier.height(16.dp))
 
-    // Out of range banner
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -86,7 +84,6 @@ fun LockedCacheContent(cache: Cache, clueUnlocked: Boolean) {
         }
     }
 
-    // Clue card — only visible if user walked within 200m this session
     if (clueUnlocked && cache.CacheClue.isNotBlank()) {
         Spacer(Modifier.height(12.dp))
         Card(
@@ -122,7 +119,7 @@ fun LockedCacheContent(cache: Cache, clueUnlocked: Boolean) {
     )
 }
 
-// ── In-range cache ────────────────────────────────────────────────
+
 
 @Composable
 fun InRangeCacheContent(cache: Cache, onLogFind: () -> Unit) {
@@ -193,7 +190,6 @@ fun InRangeCacheContent(cache: Cache, onLogFind: () -> Unit) {
     }
 }
 
-// ── Found cache ───────────────────────────────────────────────────
 
 @Composable
 fun FoundCacheContent(cache: Cache, onDismiss: () -> Unit) {

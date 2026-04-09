@@ -44,7 +44,7 @@ fun CacheCard(cache: Cache) {
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.secondary
             )
-            // Show which event this cache belongs to if available
+
             cache.CacheEvent?.let { event ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(

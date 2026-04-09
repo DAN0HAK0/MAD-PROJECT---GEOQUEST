@@ -93,8 +93,7 @@ fun HomeScreen(
                                 caches.count { it.CacheID in foundCacheIds } < caches.size
                     }
 
-                    // Private tab — exclude events owned by the current user
-                    // (owners manage their events via My Events, not here)
+
                     3 -> homeState.activeEvents.filter {
                         !it.EventIspublic && it.EventOwnerID != currentUser?.UserID
                     }

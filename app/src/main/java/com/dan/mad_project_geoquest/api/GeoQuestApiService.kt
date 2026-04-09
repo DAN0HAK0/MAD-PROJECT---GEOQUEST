@@ -6,7 +6,6 @@ import retrofit2.http.*
 
 interface GeoQuestApiService {
 
-    // ── Users ─────────────────────────────────────────────────────
     @GET("users")
     suspend fun getUsers(@Query("key") key: String = API_KEY): List<User>
 
@@ -35,7 +34,7 @@ interface GeoQuestApiService {
         @Query("key") key: String = API_KEY
     ): Response<Unit>
 
-    // ── Events ────────────────────────────────────────────────────
+
     @GET("events")
     suspend fun getEvents(@Query("key") key: String = API_KEY): List<Event>
 
@@ -70,11 +69,14 @@ interface GeoQuestApiService {
         @Query("key") key: String = API_KEY
     ): Response<Unit>
 
-    // ── Status ────────────────────────────────────────────────────
+
+
     @GET("status")
     suspend fun getStatuses(@Query("key") key: String = API_KEY): List<Status>
 
-    // ── Players ───────────────────────────────────────────────────
+
+
+
     @GET("players")
     suspend fun getPlayers(@Query("key") key: String = API_KEY): List<Player>
 
@@ -109,7 +111,11 @@ interface GeoQuestApiService {
         @Query("key") key: String = API_KEY
     ): Response<Unit>
 
-    // ── Caches ────────────────────────────────────────────────────
+
+
+
+
+
     @GET("caches")
     suspend fun getCaches(@Query("key") key: String = API_KEY): List<Cache>
 
@@ -144,7 +150,11 @@ interface GeoQuestApiService {
         @Query("key") key: String = API_KEY
     ): Response<Unit>
 
-    // ── Finds ─────────────────────────────────────────────────────
+
+
+
+
+
     @GET("finds")
     suspend fun getFinds(@Query("key") key: String = API_KEY): List<Find>
 
