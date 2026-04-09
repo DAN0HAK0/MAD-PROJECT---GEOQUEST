@@ -18,7 +18,7 @@ import com.dan.mad_project_geoquest.api.SessionManager
 import com.dan.mad_project_geoquest.api.UserPayload
 import kotlinx.coroutines.launch
 
-// ── Account Management Section ────────────────────────────────────
+
 
 @Composable
 fun AccountManagementSection(modifier: Modifier = Modifier) {
@@ -207,7 +207,6 @@ fun AccountManagementSection(modifier: Modifier = Modifier) {
     }
 }
 
-// ── Edit Field Card (expandable) ──────────────────────────────────
 
 @Composable
 fun EditFieldCard(
@@ -242,7 +241,7 @@ fun EditFieldCard(
     }
 }
 
-// ── Change Username Form ──────────────────────────────────────────
+// Form to change user name shoudl user wish to
 
 @Composable
 fun ChangeUsernameForm(
@@ -291,7 +290,7 @@ fun ChangeUsernameForm(
     }
 }
 
-// ── Change Password Form ──────────────────────────────────────────
+//Form to change password shoul user wish to
 
 @Composable
 fun ChangePasswordForm(
@@ -354,7 +353,7 @@ fun ChangePasswordForm(
     }
 }
 
-// ── Change Phone Form ─────────────────────────────────────────────
+// Form to change phone number
 
 @Composable
 fun ChangePhoneForm(

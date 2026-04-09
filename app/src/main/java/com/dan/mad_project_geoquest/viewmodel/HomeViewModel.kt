@@ -133,7 +133,7 @@ class HomeViewModel : ViewModel() {
                 val response = RetrofitClient.instance.deletePlayer(playerRecord.PlayerID)
 
                 if (response.isSuccessful) {
-                    // Clear currentPlayer if it was this event's player record
+
                     if (SessionManager.currentPlayer?.PlayerID == playerRecord.PlayerID) {
                         SessionManager.currentPlayer = null
                     }

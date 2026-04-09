@@ -2,7 +2,7 @@ package com.dan.mad_project_geoquest.api
 
 import com.google.gson.annotations.SerializedName
 
-// ─── Response models (used for GET) ──────────────────────────────
+
 
 data class User(
     @SerializedName("UserID") val UserID: Int = 0,
@@ -67,7 +67,7 @@ data class Find(
     @SerializedName("FindCache") val FindCache: Cache? = null
 )
 
-// ─── Payload models (used for POST — no ID fields) ────────────────
+
 
 data class UserPayload(
     @SerializedName("UserFirstname") val UserFirstname: String,

@@ -35,7 +35,7 @@ import com.dan.mad_project_geoquest.ui.theme.Gold
 import com.dan.mad_project_geoquest.viewmodel.HomeViewModel
 import com.dan.mad_project_geoquest.components.formatEventDate
 import com.dan.mad_project_geoquest.components.eventStatusLabel
-// ── Event Detail Screen ───────────────────────────────────────────
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +73,7 @@ fun EventDetailScreen(
     val statusLabel = eventStatusLabel(event.EventStatusID).first
     val statusColor = eventStatusLabel(event.EventStatusID).second
 
-    // ── Leave confirmation dialog ─────────────────────────────────
+
     if (showLeaveDialog) {
         AlertDialog(
             onDismissRequest = { showLeaveDialog = false },
@@ -116,7 +116,6 @@ fun EventDetailScreen(
                     }
                 },
                 actions = {
-                    // Only non-owners who are joined can leave
                     if (!isOwner && isJoined) {
                         TextButton(onClick = { showLeaveDialog = true }) {
                             Text(
@@ -148,7 +147,6 @@ fun EventDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                // ── Event header card ─────────────────────────────
                 item {
                     EventDetailHeaderCard(
                         event = event,
@@ -161,7 +159,6 @@ fun EventDetailScreen(
                     )
                 }
 
-                // ── Section heading ───────────────────────────────
                 item {
                     Text(
                         text = "Caches",
@@ -186,7 +183,6 @@ fun EventDetailScreen(
                         )
                     }
                 } else {
-                    // ── Cache cards ───────────────────────────────
                     items(eventCaches) { cache ->
                         val isFound = cache.CacheID in foundCacheIds
                         ExpandableCacheDetailCard(cache = cache, isFound = isFound)
@@ -196,7 +192,6 @@ fun EventDetailScreen(
                 item { Spacer(Modifier.height(8.dp)) }
             }
 
-            // Snackbar for leave feedback
             leaveMessage?.let { msg ->
                 Snackbar(
                     modifier = Modifier
@@ -211,7 +206,6 @@ fun EventDetailScreen(
     }
 }
 
-// ── Event header card ─────────────────────────────────────────────
 
 @Composable
 fun EventDetailHeaderCard(
@@ -233,7 +227,7 @@ fun EventDetailHeaderCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Status + visibility row
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -247,7 +241,7 @@ fun EventDetailHeaderCard(
 
             Spacer(Modifier.height(10.dp))
 
-            // Dates
+
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(
                     Icons.Filled.LocationOn,
@@ -272,7 +266,7 @@ fun EventDetailHeaderCard(
                 )
             }
 
-            // Description
+
             if (event.EventDescription.isNotBlank()) {
                 Spacer(Modifier.height(10.dp))
                 Text(
@@ -282,7 +276,7 @@ fun EventDetailHeaderCard(
                 )
             }
 
-            // Progress
+
             Spacer(Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -315,7 +309,7 @@ fun EventDetailHeaderCard(
     }
 }
 
-// ── Status badge chip ─────────────────────────────────────────────
+
 
 @Composable
 fun StatusBadge(label: String, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
@@ -333,7 +327,6 @@ fun StatusBadge(label: String, color: Color = MaterialTheme.colorScheme.onSurfac
     }
 }
 
-// ── Expandable cache detail card ──────────────────────────────────
 
 @Composable
 fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
@@ -354,7 +347,6 @@ fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
 
-            // Header row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -397,7 +389,7 @@ fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Points badge
+
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = if (isFound)
@@ -417,7 +409,6 @@ fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
                         )
                     }
 
-                    // Expand/collapse arrow (only for found caches)
                     if (isFound) {
                         Icon(
                             imageVector = if (expanded) Icons.Filled.KeyboardArrowUp
@@ -429,7 +420,7 @@ fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
                 }
             }
 
-            // Expanded detail section
+
             AnimatedVisibility(
                 visible = expanded && isFound,
                 enter = expandVertically(),
@@ -442,7 +433,6 @@ fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
                     )
                     Spacer(Modifier.height(12.dp))
 
-                    // Cache image (if URL present)
                     if (cache.CacheImageURL.isNotBlank()) {
                         AsyncImage(
                             model = cache.CacheImageURL,
@@ -457,7 +447,7 @@ fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
                         Spacer(Modifier.height(12.dp))
                     }
 
-                    // Full description
+
                     if (cache.CacheDescription.isNotBlank()) {
                         Text(
                             text = "Description",
@@ -474,7 +464,7 @@ fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
                         Spacer(Modifier.height(10.dp))
                     }
 
-                    // Clue
+                    // Clues
                     if (cache.CacheClue.isNotBlank()) {
                         Text(
                             text = "Clue",
@@ -492,7 +482,7 @@ fun ExpandableCacheDetailCard(cache: Cache, isFound: Boolean) {
                         Spacer(Modifier.height(10.dp))
                     }
 
-                    // Coordinates
+                    // Coordinates of caches
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)

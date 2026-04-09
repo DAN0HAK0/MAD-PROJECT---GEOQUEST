@@ -31,7 +31,6 @@ fun MapCompassOverlay(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var azimuth by remember { mutableFloatStateOf(0f) }
 
-    // ── Sensor setup ──────────────────────────────────────────────
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
@@ -70,7 +69,6 @@ fun MapCompassOverlay(modifier: Modifier = Modifier) {
         }
     }
 
-    // ── Smooth rotation animation ─────────────────────────────────
     val animatedAzimuth by animateFloatAsState(
         targetValue = azimuth,
         animationSpec = tween(durationMillis = 200),
@@ -88,7 +86,6 @@ fun MapCompassOverlay(modifier: Modifier = Modifier) {
         else             -> "NW"
     }
 
-    // ── UI ────────────────────────────────────────────────────────
     Box(
         modifier = modifier
             .size(64.dp)
@@ -96,7 +93,6 @@ fun MapCompassOverlay(modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)),
         contentAlignment = Alignment.Center
     ) {
-        // Compass needle drawn on canvas
         Canvas(
             modifier = Modifier
                 .size(48.dp)
@@ -107,7 +103,6 @@ fun MapCompassOverlay(modifier: Modifier = Modifier) {
             val needleLength = size.minDimension / 2f * 0.75f
             val needleWidth  = size.minDimension * 0.12f
 
-            // North needle (red)
             val northPath = Path().apply {
                 moveTo(cx, cy - needleLength)
                 lineTo(cx - needleWidth / 2, cy)
@@ -116,7 +111,6 @@ fun MapCompassOverlay(modifier: Modifier = Modifier) {
             }
             drawPath(northPath, color = Color(0xFFE53935))
 
-            // South needle (white/light)
             val southPath = Path().apply {
                 moveTo(cx, cy + needleLength)
                 lineTo(cx - needleWidth / 2, cy)
@@ -125,11 +119,9 @@ fun MapCompassOverlay(modifier: Modifier = Modifier) {
             }
             drawPath(southPath, color = Color(0xFFBDBDBD))
 
-            // Centre dot
             drawCircle(color = Color.DarkGray, radius = needleWidth / 2f, center = Offset(cx, cy))
         }
 
-        // Cardinal label below needle
         Text(
             text = cardinalLabel,
             fontSize = 9.sp,

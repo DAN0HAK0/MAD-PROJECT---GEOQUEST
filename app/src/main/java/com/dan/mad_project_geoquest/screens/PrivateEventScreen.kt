@@ -482,8 +482,7 @@ fun MyEventDetailScreen(event: Event, onBack: () -> Unit) {
     }
 }
 
-// ── Create private event form ─────────────────────────────────────
-
+//Form to create the private events
 @Composable
 fun CreatePrivateEventForm(
     onCancel: () -> Unit,
@@ -583,8 +582,7 @@ fun CreatePrivateEventForm(
     }
 }
 
-// ── Add cache form (inside a user's own event) ────────────────────
-
+//Form to create caches for user private event
 @Composable
 fun AddCacheForm(
     eventId: Int,

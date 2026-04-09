@@ -101,7 +101,7 @@ class LeaderboardViewModel : ViewModel() {
                     .filter { it.PlayerID in scopedPlayerIds }
                     .associate { it.PlayerID to it.PlayerUserID }
 
-                // Group finds per user
+
                 val findsPerUser = allFinds
                     .filter {
                         it.FindPlayerID in scopedPlayerIds &&
