@@ -1,5 +1,6 @@
 # MAD-PROJECT---GEOQUEST
 Location Based Treasure Hunt App
+Members: Danish & Asvin
 
 Theme Inspired by One Piece Anime
 Navigation Bar Inspired by game Paper.io 2
