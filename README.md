@@ -21,6 +21,10 @@ Two pathways:
 
 ## Admin Pathway
 
+<p align="center">
+  <img src="AdminScreenImage.jpg" width="300"/>
+</p>
+
 Admin Pathway accessible through login below:  
 
 **Username:** AdminDan  
@@ -34,6 +38,10 @@ The admin is also able to manage the users, deleting users if any errors seem to
 
 ## User/Player Pathway
 
+<p align="center">
+  <img src="UserScreenImage.jpg" width="300"/>
+</p>
+
 Accessible through:  
 creating your own account or use existing account already made.  
 
@@ -45,6 +53,7 @@ creating your own account or use existing account already made.
 **Username:** Officially  
 **Password:** password  
 
+---
 
 Users/players can:
 - join public/private events  
