@@ -13,3 +13,8 @@ object SessionManager {
         currentPlayer = null
     }
 }
+
+
+// ADMIN ACCOUNT:
+//USER NAME: AdminDan
+//PASSWORD: AdminAccess

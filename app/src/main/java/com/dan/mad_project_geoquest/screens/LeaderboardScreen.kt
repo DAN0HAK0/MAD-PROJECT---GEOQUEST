@@ -1,277 +1,219 @@
 package com.dan.mad_project_geoquest.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dan.mad_project_geoquest.viewmodel.CacheViewModel
+import com.dan.mad_project_geoquest.components.lb.EventFilterDropdown
+import com.dan.mad_project_geoquest.components.lb.LeaderboardRow
+import com.dan.mad_project_geoquest.components.lb.MiniPodium
+import com.dan.mad_project_geoquest.components.lb.Podium
+import com.dan.mad_project_geoquest.ui.theme.Cream
+import com.dan.mad_project_geoquest.ui.theme.DarkBrown
+import com.dan.mad_project_geoquest.ui.theme.Gold
+import com.dan.mad_project_geoquest.ui.theme.Sand
 import com.dan.mad_project_geoquest.viewmodel.LeaderboardEntry
+import com.dan.mad_project_geoquest.viewmodel.LeaderboardViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LeaderboardScreen(cacheViewModel: CacheViewModel) {
-    val state by cacheViewModel.leaderboardUiState.collectAsState()
+fun LeaderboardScreen(leaderboardViewModel: LeaderboardViewModel) {
+    val state by leaderboardViewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
-        cacheViewModel.loadLeaderboard()
+        leaderboardViewModel.loadLeaderboard()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Leaderboard",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold
-            )
-            IconButton(onClick = { cacheViewModel.loadLeaderboard() }) {
-                Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
-            }
-        }
-
-        Text(
-            text = "Ranked by caches found",
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        if (state.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            return@Column
-        }
-
-        state.errorMessage?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-            Spacer(Modifier.height(8.dp))
-        }
-
-        if (state.entries.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No data yet — go find some caches!", fontSize = 16.sp)
-            }
-        } else {
-            // Podium for top 3
-            if (state.entries.size >= 3) {
-                Podium(
-                    first = state.entries[0],
-                    second = state.entries[1],
-                    third = state.entries[2]
+    Scaffold(
+        topBar = {
+            Column {
+                TopAppBar(
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Leaderboard", fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Row(modifier = Modifier.padding(end = 8.dp)) {
+                                FilterChip(
+                                    selected = !state.sortByPoints,
+                                    onClick = { leaderboardViewModel.onSortChanged(false) },
+                                    label = { Text("Finds", fontSize = 11.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Gold,
+                                        selectedLabelColor = DarkBrown
+                                    )
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                FilterChip(
+                                    selected = state.sortByPoints,
+                                    onClick = { leaderboardViewModel.onSortChanged(true) },
+                                    label = { Text("Points", fontSize = 11.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Gold,
+                                        selectedLabelColor = DarkBrown
+                                    )
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { leaderboardViewModel.loadLeaderboard() }) {
+                            Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = DarkBrown,
+                        titleContentColor = Cream,
+                        actionIconContentColor = Cream
+                    )
                 )
-                Spacer(Modifier.height(24.dp))
-            }
-
-            // Rest of the list from 4th place onwards
-            val remainingEntries = if (state.entries.size > 3) state.entries.drop(3) else emptyList()
-
-            if (remainingEntries.isNotEmpty()) {
-                Text(
-                    text = "Other Players",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    itemsIndexed(remainingEntries) { _, entry ->
-                        LeaderboardRow(entry = entry)
+                TabRow(
+                    selectedTabIndex = if (state.isPublicTab) 0 else 1,
+                    containerColor = DarkBrown,
+                    contentColor = Cream,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(
+                                tabPositions[if (state.isPublicTab) 0 else 1]
+                            ),
+                            color = Gold
+                        )
                     }
+                ) {
+                    Tab(
+                        selected = state.isPublicTab,
+                        onClick = { if (!state.isPublicTab) leaderboardViewModel.onTabChanged(true) },
+                        text = { Text("Public Events") },
+                        selectedContentColor = Cream,
+                        unselectedContentColor = Sand
+                    )
+                    Tab(
+                        selected = !state.isPublicTab,
+                        onClick = { if (state.isPublicTab) leaderboardViewModel.onTabChanged(false) },
+                        text = { Text("Private Events") },
+                        selectedContentColor = Cream,
+                        unselectedContentColor = Sand
+                    )
                 }
             }
         }
-    }
-}
+    ) { innerPadding ->
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
 
-@Composable
-fun Podium(
-    first: LeaderboardEntry,
-    second: LeaderboardEntry,
-    third: LeaderboardEntry
-) {
-    val goldColor = Color(0xFFFFD700)
-    val silverColor = Color(0xFFC0C0C0)
-    val bronzeColor = Color(0xFFCD7F32)
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        // 2nd place
-        PodiumColumn(
-            entry = second,
-            medal = "🥈",
-            color = silverColor,
-            heightDp = 90,
-            rankLabel = "2nd"
-        )
-
-        // 1st place — tallest
-        PodiumColumn(
-            entry = first,
-            medal = "🥇",
-            color = goldColor,
-            heightDp = 120,
-            rankLabel = "1st"
-        )
-
-        // 3rd place
-        PodiumColumn(
-            entry = third,
-            medal = "🥉",
-            color = bronzeColor,
-            heightDp = 70,
-            rankLabel = "3rd"
-        )
-    }
-}
-
-@Composable
-fun PodiumColumn(
-    entry: LeaderboardEntry,
-    medal: String,
-    color: Color,
-    heightDp: Int,
-    rankLabel: String
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Bottom
-    ) {
-        // Medal emoji
-        Text(text = medal, fontSize = 28.sp)
-
-        Spacer(Modifier.height(4.dp))
-
-        // Username
-        Text(
-            text = entry.username,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            color = if (entry.isCurrentUser) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurface
-        )
-
-        // Find count
-        Text(
-            text = "${entry.findCount} finds",
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.height(6.dp))
-
-        // Podium block
-        Box(
-            modifier = Modifier
-                .width(90.dp)
-                .height(heightDp.dp)
-                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                .background(color.copy(alpha = 0.85f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = rankLabel,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
-    }
-}
-
-@Composable
-fun LeaderboardRow(entry: LeaderboardEntry) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (entry.isCurrentUser)
-                MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "#${entry.rank}",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            if (state.availableEvents.isNotEmpty()) {
+                EventFilterDropdown(
+                    availableEvents = state.availableEvents,
+                    selectedEventId = state.selectedEventId,
+                    isPublicTab = state.isPublicTab,
+                    onEventSelected = { leaderboardViewModel.onEventSelected(it) }
                 )
             }
 
-            Spacer(Modifier.width(14.dp))
+            if (state.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                return@Column
+            }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = entry.username,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (entry.isCurrentUser) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface
-                    )
-                    if (entry.isCurrentUser) {
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = "YOU",
-                            fontSize = 9.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                    RoundedCornerShape(4.dp)
-                                )
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
+            state.errorMessage?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+
+            if (state.entries.isEmpty()) {
+                EmptyLeaderboardMessage(
+                    isPublicTab = state.isPublicTab,
+                    hasNoEvents = state.availableEvents.isEmpty()
+                )
+                return@Column
+            }
+
+            val subtitle: (LeaderboardEntry) -> String = { entry ->
+                if (state.sortByPoints) "${entry.totalPoints.toInt()} pts"
+                else "${entry.findCount} finds"
+            }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item { Spacer(Modifier.height(8.dp)) }
+                item {
+                    when {
+                        state.entries.size >= 3 -> Podium(
+                            first = state.entries[0],
+                            second = state.entries[1],
+                            third = state.entries[2],
+                            subtitle = subtitle
+                        )
+                        state.entries.size == 2 -> MiniPodium(
+                            first = state.entries[0],
+                            second = state.entries[1],
+                            subtitle = subtitle
+                        )
+                        else -> LeaderboardRow(
+                            entry = state.entries[0],
+                            subtitle = subtitle(state.entries[0])
                         )
                     }
                 }
-                Text(
-                    text = "${entry.findCount} finds",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                val remaining = if (state.entries.size > 3) state.entries.drop(3) else emptyList()
+                if (remaining.isNotEmpty()) {
+                    item {
+                        Text(
+                            "Other players",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                        )
+                    }
+                    itemsIndexed(remaining) { _, entry ->
+                        LeaderboardRow(entry = entry, subtitle = subtitle(entry))
+                    }
+                }
+                item { Spacer(Modifier.height(16.dp)) }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyLeaderboardMessage(isPublicTab: Boolean, hasNoEvents: Boolean) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = if (hasNoEvents && !isPublicTab) "No private events joined yet"
+                else "No finds recorded yet",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = if (hasNoEvents && !isPublicTab) "Join a private event to see its leaderboard"
+                else "Go find some caches!",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

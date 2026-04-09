@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,21 +28,26 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dan.mad_project_geoquest.viewmodel.CacheViewModel
+import com.dan.mad_project_geoquest.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
-    cacheViewModel: CacheViewModel,
+    loginViewModel: LoginViewModel,
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    val uiState by cacheViewModel.loginUiState.collectAsState()
+    val uiState by loginViewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Clear fields every time the login screen is shown
+    LaunchedEffect(Unit) {
+        loginViewModel.clear()
+    }
+
     LaunchedEffect(uiState.isLoginSuccess) {
         if (uiState.isLoginSuccess) {
-            cacheViewModel.resetLoginSuccess()
+            loginViewModel.resetLoginSuccess()
             onLoginSuccess()
         }
     }
@@ -63,17 +69,10 @@ fun LoginScreen(
 
             Text(
                 text = "GeoQuest",
-                fontSize = 36.sp,
+                fontSize = 60.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            Text(
-                text = "Location-Based Treasure Hunt",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-
             Spacer(Modifier.height(48.dp))
 
             Card(
@@ -92,7 +91,7 @@ fun LoginScreen(
 
                     OutlinedTextField(
                         value = uiState.username,
-                        onValueChange = cacheViewModel::onLoginUsernameChange,
+                        onValueChange = loginViewModel::onUsernameChange,
                         label = { Text("Username") },
                         leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
@@ -111,18 +110,20 @@ fun LoginScreen(
 
                     OutlinedTextField(
                         value = uiState.password,
-                        onValueChange = cacheViewModel::onLoginPasswordChange,
+                        onValueChange = loginViewModel::onPasswordChange,
                         label = { Text("Password") },
                         leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Filled.Search else Icons.Filled.FavoriteBorder,
-                                    contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                                    imageVector = if (passwordVisible) Icons.Filled.Lock
+                                    else Icons.Filled.RemoveRedEye,
+                                    contentDescription = null
                                 )
                             }
                         },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
@@ -132,7 +133,7 @@ fun LoginScreen(
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 focusManager.clearFocus()
-                                cacheViewModel.login()
+                                loginViewModel.login(onSuccess = {})
                             }
                         ),
                         shape = RoundedCornerShape(12.dp)
@@ -155,7 +156,7 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             focusManager.clearFocus()
-                            cacheViewModel.login()
+                            loginViewModel.login(onSuccess = {})
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -172,11 +173,7 @@ fun LoginScreen(
                             Spacer(Modifier.width(10.dp))
                             Text("Signing in...")
                         } else {
-                            Text(
-                                text = "Sign In",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Text(text = "Sign In", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 

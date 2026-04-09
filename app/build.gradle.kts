@@ -54,20 +54,18 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-    // Retrofit + OkHttp (exactly as shown in course Gradle file)
+    // Retrofit + OkHttp
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-
-
-    //navigation
+    // Navigation
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
 
-    //room
+    // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.play.services.maps)
@@ -76,11 +74,21 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     ksp(libs.androidx.room.ksp)
 
-    //ViewModel + lifecycle for compose
+    // ViewModel + lifecycle for compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation(libs.androidx.activity.ktx)
 
+    // CameraX
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.compose)
+    implementation(libs.androidx.camera.extensions)
+
+    // Extended icons (for camera icons)
+    implementation("androidx.compose.material:material-icons-extended")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -93,7 +101,6 @@ dependencies {
 
 buildscript {
     dependencies {
-        //...
         classpath(libs.secrets.gradle.plugin)
     }
 }
