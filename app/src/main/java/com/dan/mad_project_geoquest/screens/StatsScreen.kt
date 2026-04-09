@@ -18,74 +18,77 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.dan.mad_project_geoquest.api.Find
 import com.dan.mad_project_geoquest.api.SessionManager
-import com.dan.mad_project_geoquest.viewmodel.CacheViewModel
-import java.text.SimpleDateFormat
-import java.util.Locale
+import com.dan.mad_project_geoquest.components.stats.BrownStatCard
+import com.dan.mad_project_geoquest.components.stats.CardBrown
+import com.dan.mad_project_geoquest.components.stats.CardBrownLight
+import com.dan.mad_project_geoquest.components.stats.CreamText
+import com.dan.mad_project_geoquest.components.stats.FindRow
+import com.dan.mad_project_geoquest.components.stats.GoldBorder
+import com.dan.mad_project_geoquest.ui.theme.Cream
+import com.dan.mad_project_geoquest.ui.theme.DarkBrown
+import com.dan.mad_project_geoquest.ui.theme.Gold
+import com.dan.mad_project_geoquest.viewmodel.StatsViewModel
 
-fun formatFindDateTime(dateStr: String): String {
-    return try {
-        val input = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK)
-        val output = SimpleDateFormat("dd MMM yyyy 'at' HH:mm", Locale.UK)
-        output.format(input.parse(dateStr)!!)
-    } catch (_: Exception) {
-        dateStr.take(10)
-    }
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatsScreen(cacheViewModel: CacheViewModel) {
-    val state by cacheViewModel.statsUiState.collectAsState()
+fun StatsScreen(statsViewModel: StatsViewModel) {
+    val state by statsViewModel.uiState.collectAsState()
     val user = SessionManager.currentUser
 
-    LaunchedEffect(Unit) {
-        cacheViewModel.loadStats()
-    }
+    LaunchedEffect(Unit) { statsViewModel.loadStats() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "My Stats", fontSize = 26.sp, fontWeight = FontWeight.Bold)
-            IconButton(onClick = { cacheViewModel.loadStats() }) {
-                Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
-            }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("My Stats", fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                },
+                actions = {
+                    IconButton(onClick = { statsViewModel.loadStats() }) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBrown,
+                    titleContentColor = Cream,
+                    actionIconContentColor = Cream
+                )
+            )
         }
-
-        Spacer(Modifier.height(8.dp))
-
+    ) { innerPadding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            return@Column
+            return@Scaffold
         }
 
-        state.errorMessage?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-            Spacer(Modifier.height(8.dp))
-        }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item { Spacer(Modifier.height(4.dp)) }
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            state.errorMessage?.let { err ->
+                item { Text(err, color = MaterialTheme.colorScheme.error, fontSize = 13.sp) }
+            }
 
-            // Profile card with user image
+            //User Profile info
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(2.dp, GoldBorder, RoundedCornerShape(16.dp)),
                     shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardBrown),
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         AsyncImage(
@@ -95,61 +98,52 @@ fun StatsScreen(cacheViewModel: CacheViewModel) {
                             modifier = Modifier
                                 .size(90.dp)
                                 .clip(CircleShape)
-                                .border(
-                                    3.dp,
-                                    MaterialTheme.colorScheme.primary,
-                                    CircleShape
-                                ),
+                                .border(3.dp, Gold, CircleShape),
                             contentScale = ContentScale.Crop
                         )
                         Spacer(Modifier.height(12.dp))
-                        Text(
-                            text = state.username,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "GeoQuest Explorer",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Text(state.username, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = CreamText)
+                        Text("GeoQuest Explorer", fontSize = 13.sp, color = Gold)
                     }
                 }
             }
 
-            // Level card
+// Showing User Level and Points
             item {
-                StatsDetailCard(
-                    label = "Level",
-                    value = "${(state.totalFinds / 5) + 1}",
-                    subtitle = "${state.totalFinds % 5} / 5 finds to next level"
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    BrownStatCard(
+                        modifier = Modifier.weight(1f),
+                        label = "Level",
+                        value = "${(state.totalFinds / 5) + 1}",
+                        subtitle = "${state.totalFinds % 5}/5 to next"
+                    )
+                    BrownStatCard(
+                        modifier = Modifier.weight(1f),
+                        label = "Total Points",
+                        value = "${state.totalPoints.toInt()}",
+                        subtitle = "pts earned"
+                    )
+                }
             }
 
-            // Points card
+            //Showing the total caches found by the user/player
             item {
-                StatsDetailCard(
-                    label = "Total Points",
-                    value = "${state.totalPoints.toInt()}",
-                    subtitle = "Earned from finding caches"
-                )
-            }
-
-            // Caches found card
-            item {
-                StatsDetailCard(
+                BrownStatCard(
+                    modifier = Modifier.fillMaxWidth(),
                     label = "Caches Found",
                     value = "${state.totalFinds}",
-                    subtitle = "Keep exploring to find more"
+                    subtitle = "Keep exploring to find more",
+                    containerColor = CardBrownLight
                 )
             }
 
-            // Recent finds header
+            //showing all the recent caches found by the user
             item {
                 Text(
-                    text = "Recent Finds",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    "Recent Finds", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -157,104 +151,20 @@ fun StatsScreen(cacheViewModel: CacheViewModel) {
             if (state.recentFinds.isEmpty()) {
                 item {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No finds yet — head to the map!",
+                            "No finds yet — head to the map!",
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             } else {
-                items(state.recentFinds) { find ->
-                    FindRow(find = find)
-                }
+                items(state.recentFinds) { find -> FindRow(find = find) }
             }
 
             item { Spacer(Modifier.height(16.dp)) }
-        }
-    }
-}
-
-@Composable
-fun StatsDetailCard(
-    label: String,
-    value: String,
-    subtitle: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = label,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = value,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = subtitle,
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun FindRow(find: Find) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = find.FindCache?.CacheName ?: "Cache #${find.FindCacheID}",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = formatFindDateTime(find.FindDatetime),
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Text(
-                text = "+${find.FindCache?.CachePoints?.toInt() ?: 0} pts",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary
-            )
         }
     }
 }

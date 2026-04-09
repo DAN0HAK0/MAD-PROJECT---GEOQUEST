@@ -16,7 +16,7 @@ sealed interface NavObjects : NavKey {
     data object Home : NavObjects
 
     @Serializable
-    data object Blank : NavObjects  // Originally had this as blank screen but now changed to leaderboard screen
+    data object Blank : NavObjects  // Leaderboard screen
 
     @Serializable
     data object Map : NavObjects
@@ -29,4 +29,13 @@ sealed interface NavObjects : NavKey {
 
     @Serializable
     data object Admin : NavObjects
+
+    @Serializable
+    data object MyEvents : NavObjects
+
+    @Serializable
+    data class EventDetail(val eventId: Int) : NavObjects
+
+    @Serializable
+    data class Camera(val cacheId: Int, val cacheName: String) : NavObjects
 }

@@ -28,18 +28,18 @@ fun CacheCard(cache: Cache) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "📍 ${cache.CacheLatitude}, ${cache.CacheLongitude}",
+                text = "${cache.CacheLatitude}, ${cache.CacheLongitude}",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "🔍 Clue: ${cache.CacheClue.ifBlank { "No clue provided" }}",
+                text = "Clue: ${cache.CacheClue.ifBlank { "No clue provided" }}",
                 fontSize = 13.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "⭐ Points: ${cache.CachePoints.toInt()}",
+                text = "Points: ${cache.CachePoints.toInt()}",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.secondary
