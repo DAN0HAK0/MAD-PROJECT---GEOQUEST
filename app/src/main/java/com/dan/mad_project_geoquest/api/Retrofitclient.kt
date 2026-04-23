@@ -6,7 +6,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 const val API_KEY = "577p2m"
-const val BASE_URL = "https://mark0s.com/geoquest/v1/api/"
+const val BASE_URL = "https://mobile.madzs1mple.uk/geoquest/v1/api/"
 
 object RetrofitClient {
 
